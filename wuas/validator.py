@@ -10,7 +10,7 @@ class ValidationError(Exception):
 
 
 def validate(config: ConfigFile, board: Board) -> None:
-    definitions = config.get_definitions()
+    definitions = config.definitions
     for x, y in board.indices:
         try:
             space = board.get_space(x, y)

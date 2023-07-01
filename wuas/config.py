@@ -1,9 +1,12 @@
 
 from __future__ import annotations
 
+from PIL import Image
+
 import json
 from typing import Any
 from dataclasses import dataclass
+from functools import cached_property
 
 class ConfigFile:
     _json_data: Any
@@ -16,8 +19,17 @@ class ConfigFile:
         with open(filename, 'r') as json_file:
             return cls(json.load(json_file))
 
-    def get_definitions(self) -> DefinitionsFile:
+    @cached_property
+    def definitions(self) -> DefinitionsFile:
         return DefinitionsFile.from_json(filename=self._json_data['files']['dict'])
+
+    @cached_property
+    def spaces_png(self) -> SpacesPng:
+        return SpacesPng(Image.open(self._json_data['files']['spaces']))
+
+    @cached_property
+    def tokens_png(self) -> TokensPng:
+        return TokensPng(Image.open(self._json_data['files']['tokens']))
 
 
 class DefinitionsFile:
@@ -113,3 +125,30 @@ class TokenDefinition:
             thumbnail=(x, y),
             desc=json_data['desc'],
         )
+
+
+class SpacesPng:
+    image: Image.Image
+
+    def __init__(self, image: Image.Image) -> None:
+        self.image = image
+
+    def select(self, coords: tuple[int, int, int, int]) -> Image.Image:
+        return self.image.crop(coords)
+
+
+class TokensPng:
+    image: Image.Image
+
+    def __init__(self, image: Image.Image) -> None:
+        self.image = image
+
+    def select(self, coords: tuple[int, int], span: tuple[int, int] = (1, 1)) -> Image.Image:
+        x_span, y_span = span
+        x0, y0 = coords
+        x1, y1 = x0 + TOKEN_WIDTH * x_span, y0 + TOKEN_HEIGHT * y_span
+        return self.image.crop((x0, y0, x1, y1))
+
+
+TOKEN_WIDTH = 16
+TOKEN_HEIGHT = 16
