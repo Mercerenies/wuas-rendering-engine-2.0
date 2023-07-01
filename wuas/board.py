@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Mapping, Sequence
+from typing import Mapping, Sequence, Iterable
 
 
 class Board:
@@ -37,6 +37,12 @@ class Board:
     def tokens(self) -> Mapping[str, Token]:
         return self._references
 
+    @property
+    def indices(self) -> Iterable[tuple[int, int]]:
+        for y in range(0, self.height):
+            for x in range(0, self.width):
+                yield (x, y)
+
 
 @dataclass
 class TileData:
@@ -64,7 +70,7 @@ class Space:
         try:
             return [self._references[token_id] for token_id in self._tile_data.token_ids]
         except KeyError as exc:
-            raise RuntimeError(f"No such token {str(exc)} in references table")
+            raise BoardIntegrityError(f"No such token {str(exc)} in references table")
 
 
 @dataclass(frozen=True)
@@ -73,3 +79,7 @@ class Token:
     item_name: str | None
     # (x, y) relative to the top-left corner of the space.
     position: tuple[int, int]
+
+
+class BoardIntegrityError(Exception):
+    pass
