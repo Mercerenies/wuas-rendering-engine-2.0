@@ -1,14 +1,11 @@
 
 from wuas.board import Board
-from wuas.config import ConfigFile, DefinitionsFile
+from wuas.config import ConfigFile
+from wuas.constants import SPACE_WIDTH, SPACE_HEIGHT
 
 from PIL import Image, ImageDraw
 
 from enum import IntEnum
-
-
-SPACE_WIDTH = 32
-SPACE_HEIGHT = 32
 
 
 class Layer(IntEnum):

@@ -8,6 +8,16 @@ from typing import Any
 from dataclasses import dataclass
 from functools import cached_property
 
+
+def normalize_space_name(name: str) -> str:
+    # As a hard-coded alias, spaces that are totally empty are treated
+    # as "gap" spaces.
+    if name == '':
+        return 'gap'
+    else:
+        return name
+
+
 class ConfigFile:
     _json_data: Any
 
@@ -65,10 +75,7 @@ class DefinitionsFile:
             return False
 
     def get_space(self, key: str) -> SpaceDefinition:
-        # As a hard-coded alias, spaces that are totally empty are
-        # treated as "gap" spaces.
-        if key == '':
-            key = 'gap'
+        key = normalize_space_name(key)
         return SpaceDefinition.from_json_data(self._json_data['spaces'][key])
 
     def get_item(self, key: str) -> ItemDefinition:

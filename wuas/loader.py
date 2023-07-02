@@ -39,11 +39,15 @@ def _read_board(io: TextIO) -> list[list[TileData]]:
             # This is the blank line after the end, so stop reading
             # the board.
             break
-        space_data = [space.strip() for space in space_row.split('|')]
-        token_data = [token.strip() for token in io.readline().split('|')]
+        space_data = [space.strip() for space in _split_at_bars(space_row)]
+        token_data = [token.strip() for token in _split_at_bars(io.readline())]
         assert len(space_data) == len(token_data)
         result.append([TileData(space_name, list(token)) for space_name, token in zip(space_data, token_data)])
     return result
+
+
+def _split_at_bars(text: str) -> list[str]:
+    return text.split('|')[1:-1]
 
 
 def _read_tokens(io: TextIO) -> dict[str, Token]:
