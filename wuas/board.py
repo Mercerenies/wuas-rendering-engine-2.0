@@ -9,10 +9,14 @@ class Board:
     # Board data is stored in row-major order.
     _data: list[list[TileData]]
     _references: dict[str, Token]
+    # Meta data, included after the version number as a set of
+    # key-value pairs.
+    _meta: dict[str, str]
 
-    def __init__(self, data: list[list[TileData]], references: dict[str, Token]) -> None:
+    def __init__(self, data: list[list[TileData]], references: dict[str, Token], meta: dict[str, str]) -> None:
         self._data = data
         self._references = references
+        self._meta = meta
 
     @property
     def height(self) -> int:
@@ -32,6 +36,12 @@ class Board:
             return Space(self._data[y][x], self._references)
         else:
             raise IndexError(f"Position {(x, y)} out of bounds in board of size {(self.width, self.height)}")
+
+    def has_meta(self, key: str) -> bool:
+        return key in self._meta
+
+    def get_meta(self, key: str) -> str:
+        return self._meta[key]
 
     @property
     def tokens(self) -> Mapping[str, Token]:

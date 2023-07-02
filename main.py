@@ -8,7 +8,7 @@ from wuas.output.json import render_to_json
 import json
 
 # Testing
-board = load_from_file('/home/silvio/Documents/wuas_2023/turn2.dat')
+board = load_from_file('/home/silvio/Documents/wuas_2023/turn2_newformat.dat')
 config = ConfigFile.from_json('/home/silvio/Documents/wuas_2023/config.json')
 print(board)
 validate(config, board)

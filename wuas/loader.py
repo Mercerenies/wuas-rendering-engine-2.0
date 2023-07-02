@@ -4,6 +4,10 @@ from __future__ import annotations
 from wuas.board import Board, Space, TileData, Token
 
 from typing import TextIO
+import re
+
+
+KNOWN_VERSIONS = (1, 2)
 
 
 def load_from_file(filename: str) -> Board:
@@ -16,10 +20,17 @@ def load_from_io(io: TextIO) -> Board:
     while io.readline().startswith("#"):
         pass
 
-    # Version number (must be equal to one)
+    # Version number
     version = int(io.readline())
-    if version != 1:
+    if version not in KNOWN_VERSIONS:
         raise RuntimeError(f"Invalid version number {version}")
+
+    if version == 1:
+        # Version 1 parses no metadata
+        meta = {}
+    elif version == 2:
+        # Version 2 parses key-value pairs until it hits a newline
+        meta = _read_meta(io)
 
     # The board text itself
     board_table = _read_board(io)
@@ -27,7 +38,7 @@ def load_from_io(io: TextIO) -> Board:
     # Tile reference data
     token_data = _read_tokens(io)
 
-    return Board(board_table, token_data)
+    return Board(board_table, token_data, meta)
 
 
 def _read_board(io: TextIO) -> list[list[TileData]]:
@@ -59,4 +70,14 @@ def _read_tokens(io: TextIO) -> dict[str, Token]:
             item_name=None if item_name == 'nil' else item_name,
             position=(int(x), int(y)),
         )
+    return result
+
+
+def _read_meta(io: TextIO) -> dict[str, str]:
+    result = {}
+    line = io.readline()
+    while line != '\n':
+        key, value = re.split(r":\s*", line)
+        result[key] = value
+        line = io.readline()
     return result
