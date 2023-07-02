@@ -44,6 +44,10 @@ class Board:
         return self._meta[key]
 
     @property
+    def meta(self) -> Mapping[str, str]:
+        return self._meta
+
+    @property
     def tokens(self) -> Mapping[str, Token]:
         return self._references
 
@@ -75,6 +79,10 @@ class Space:
     @space_name.setter
     def space_name(self, value: str) -> None:
         self._tile_data.space_name = value
+
+    @property
+    def token_ids(self) -> Sequence[str]:
+        return self._tile_data.token_ids
 
     def get_tokens(self) -> Sequence[Token]:
         try:

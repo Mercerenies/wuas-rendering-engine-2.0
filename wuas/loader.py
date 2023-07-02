@@ -77,6 +77,7 @@ def _read_meta(io: TextIO) -> dict[str, str]:
     result = {}
     line = io.readline()
     while line != '\n':
+        line = line.strip()
         key, value = re.split(r":\s*", line)
         result[key] = value
         line = io.readline()
