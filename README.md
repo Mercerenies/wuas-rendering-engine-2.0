@@ -7,3 +7,7 @@ formats:
 * WUAS datafile
 * JSON
 * Image (to screen or to a file)
+
+The original rendering engine can be found [at
+`wuas-render`](https://github.com/Mercerenies/wuas-render). The 2.0
+engine is backward-compatible with that one.
