@@ -2,10 +2,13 @@
 from __future__ import annotations
 
 from wuas.board import Board
-from wuas.config import normalize_space_name
+from wuas.config import ConfigFile, normalize_space_name
 from wuas.constants import SPACE_WIDTH, SPACE_HEIGHT
+from wuas.output.abc import OutputProducer
 
-from typing import TypedDict, TypeAlias
+import sys
+import json
+from typing import TypedDict, TypeAlias, TextIO
 
 WuasJsonOutput: TypeAlias = 'dict[str, Floor]'
 
@@ -52,3 +55,19 @@ def _render_tokens(board: Board) -> list[Token]:
                 "position": (x * SPACE_WIDTH + dx, y * SPACE_HEIGHT + dy),
             })
     return tokens
+
+
+class JsonProducer(OutputProducer):
+    _io: TextIO
+
+    def __init__(self, io: TextIO) -> None:
+        self._io = io
+
+    @classmethod
+    def stdout(cls) -> JsonProducer:
+        return cls(sys.stdout)
+
+    def produce_output(self, config: ConfigFile, board: Board) -> None:
+        json_data = render_to_json(board)
+        json.dump(json_data, self._io)
+        self._io.write('\n')

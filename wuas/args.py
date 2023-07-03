@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from wuas.output import OutputProducer, DisplayedImageProducer
+from wuas.output import OutputProducer, DisplayedImageProducer, SavedImageProducer, JsonProducer, DatafileProducer
 
 import argparse
 from dataclasses import dataclass
@@ -53,12 +53,24 @@ def interpret_args(namespace: argparse.Namespace) -> Arguments:
 
 
 def interpret_output_producer(instruction: str, output_filename: str | None) -> OutputProducer:
-    choices = 'show-image'
+    choices = 'show-image, save-image, json, datafile'
     match instruction:
         case "show-image":
             if output_filename is not None:
                 raise ArgumentsError("show-image does not take an output file argument")
             return DisplayedImageProducer()
+        case "save-image":
+            if output_filename is None:
+                raise ArgumentsError("save-image requires an output file argument")
+            return SavedImageProducer(output_filename)
+        case "json":
+            if output_filename is not None:
+                raise ArgumentsError("json does not take an output file argument")
+            return JsonProducer.stdout()
+        case "datafile":
+            if output_filename is not None:
+                raise ArgumentsError("datafile does not take an output file argument")
+            return DatafileProducer.stdout()
         case _:
             raise ArgumentsError(f"Invalid output producer {instruction}, choices are {choices}")
 

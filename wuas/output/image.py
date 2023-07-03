@@ -84,3 +84,14 @@ class DisplayedImageProducer(OutputProducer):
     def produce_output(self, config: ConfigFile, board: Board) -> None:
         image = render_image(config, board)
         image.show()
+
+
+class SavedImageProducer(OutputProducer):
+    output_filename: str
+
+    def __init__(self, output_filename: str) -> None:
+        self.output_filename = output_filename
+
+    def produce_output(self, config: ConfigFile, board: Board) -> None:
+        image = render_image(config, board)
+        image.save(self.output_filename)

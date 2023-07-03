@@ -12,7 +12,10 @@ given in an earlier format.
 from __future__ import annotations
 
 from wuas.board import Board
+from wuas.config import ConfigFile
+from wuas.output.abc import OutputProducer
 
+import sys
 from typing import TextIO
 
 # For Emacs compatibility
@@ -81,3 +84,17 @@ def _print_token_references(board: Board, output_file: TextIO) -> None:
             value.position[0],
             value.position[1],
         ))
+
+
+class DatafileProducer(OutputProducer):
+    _io: TextIO
+
+    def __init__(self, io: TextIO) -> None:
+        self._io = io
+
+    @classmethod
+    def stdout(cls) -> DatafileProducer:
+        return cls(sys.stdout)
+
+    def produce_output(self, config: ConfigFile, board: Board) -> None:
+        render_to_data_file(board, self._io)
