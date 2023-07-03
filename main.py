@@ -5,20 +5,15 @@ from wuas.config import ConfigFile
 from wuas.output.image import render_image
 from wuas.output.json import render_to_json
 from wuas.output.data import render_to_data_file
+from wuas.args import parse_and_interpret_args
 
 import sys
 import json
 
-# Testing
-board = load_from_file('/home/silvio/Documents/wuas_2023/turn2_newformat.dat')
-config = ConfigFile.from_json('/home/silvio/Documents/wuas_2023/config.json')
-print(board)
-validate(config, board)
+args = parse_and_interpret_args()
+config = ConfigFile.from_json(args.config_filename)
+board = load_from_file(args.input_filename)
+if args.validate:
+    validate(config, board)
 
-#image = render_image(config, board)
-#image.show()
-
-#json_data = render_to_json(board)
-#print(json.dumps(json_data))
-
-render_to_data_file(board, sys.stdout)
+args.output_producer.produce_output(config, board)

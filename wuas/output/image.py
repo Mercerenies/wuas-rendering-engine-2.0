@@ -2,6 +2,7 @@
 from wuas.board import Board
 from wuas.config import ConfigFile
 from wuas.constants import SPACE_WIDTH, SPACE_HEIGHT
+from wuas.output.abc import OutputProducer
 
 from PIL import Image, ImageDraw
 
@@ -76,3 +77,10 @@ def get_layer(space_name: str) -> Layer:
         return Layer.GAP
     else:
         return Layer.REGULAR
+
+
+class DisplayedImageProducer(OutputProducer):
+
+    def produce_output(self, config: ConfigFile, board: Board) -> None:
+        image = render_image(config, board)
+        image.show()
