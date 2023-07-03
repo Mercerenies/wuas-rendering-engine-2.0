@@ -1,7 +1,7 @@
 
 from __future__ import annotations
 
-from wuas.board import Board, Space, TileData, Token
+from wuas.board import Board, TileData, Token
 
 from typing import TextIO
 import re
@@ -44,7 +44,7 @@ def load_from_io(io: TextIO) -> Board:
 def _read_board(io: TextIO) -> list[list[TileData]]:
     result = []
     while True:
-        io.readline() # Ignore the header
+        io.readline()  # Ignore the header
         space_row = io.readline()
         if '|' not in space_row:
             # This is the blank line after the end, so stop reading

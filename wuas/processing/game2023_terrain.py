@@ -24,12 +24,13 @@ class TerrainProcessor(BoardProcessor):
             adjacent = _get_adjacent_spaces(original_board, x, y)
             space.space_name = _evaluate_terrain(space.space_name, adjacent)
 
+
 def _get_adjacent_spaces(board: Board, x: int, y: int) -> list[str]:
     result = []
     targets = [
-        (x - 1, y - 1), (x    , y - 1), (x + 1, y - 1),
-        (x - 1, y    ),                 (x + 1, y    ),
-        (x - 1, y + 1), (x    , y + 1), (x + 1, y + 1),
+        (x - 1, y - 1), (x    , y - 1), (x + 1, y - 1),  # noqa: E202, E203
+        (x - 1, y    ),                 (x + 1, y    ),  # noqa: E202, E203
+        (x - 1, y + 1), (x    , y + 1), (x + 1, y + 1),  # noqa: E202, E203
     ]
     for target in targets:
         tx, ty = target

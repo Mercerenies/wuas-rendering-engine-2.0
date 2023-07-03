@@ -8,7 +8,6 @@ from wuas.board import Board
 from wuas.config import ConfigFile
 from wuas.processing.registry import registered_processor
 
-from copy import deepcopy
 import random
 
 

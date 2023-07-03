@@ -4,7 +4,7 @@ from wuas.config import ConfigFile
 from wuas.constants import SPACE_WIDTH, SPACE_HEIGHT
 from wuas.output.abc import OutputProducer
 
-from PIL import Image, ImageDraw
+from PIL import Image
 
 from enum import IntEnum
 
@@ -53,7 +53,7 @@ class Renderer:
             topleft_y = y * SPACE_HEIGHT
             for token in space.get_tokens():
                 token_data = self.config.definitions.get_token(token.token_name)
-                token_image = self.config.tokens_png.select(token_data.thumbnail) # TODO Span
+                token_image = self.config.tokens_png.select(token_data.thumbnail)  # TODO Span
                 dx, dy = token.position
                 self.image.paste(token_image, (topleft_x + dx, topleft_y + dy), token_image)
 

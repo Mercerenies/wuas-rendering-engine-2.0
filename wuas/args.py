@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from wuas.output import OutputProducer, DisplayedImageProducer, SavedImageProducer, JsonProducer, DatafileProducer
-from wuas.processing import BoardProcessor, LightingProcessor, game2023_terrain, game2023_spawnterrain, game2023_spawnfire
+from wuas.processing import BoardProcessor
 from wuas.processing.registry import REGISTERED_PROCESSORS
 
 import argparse
