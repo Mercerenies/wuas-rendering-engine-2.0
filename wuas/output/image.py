@@ -1,4 +1,6 @@
 
+"""Output format which renders to a PNG image."""
+
 from wuas.board import Board
 from wuas.config import ConfigFile
 from wuas.constants import SPACE_WIDTH, SPACE_HEIGHT
@@ -10,18 +12,34 @@ from enum import IntEnum
 
 
 class Layer(IntEnum):
-    # The layer where we draw nothing. By definition, this layer has
-    # nothing on it.
+    """Drawing spaces is done via layers, to make sure everything looks
+    reasonable in the resulting image. Every space type has a layer
+    intrinsic to it, which can be queried via get_layer. Spaces with a
+    lower layer will draw first, allowing those with a higher layer to
+    draw on top of them. The defined layers, in ascending order, are
+
+    * VOID - The minimum layer. By definition, nothing is on this layer,
+      and it appears behind everything else.
+    * GAP - The layer of gaps, i.e. empty white impassible spaces.
+    * REGULAR - The layer of all spaces that do not have special
+      drawing rules.
+    * TOKEN - No spaces draw on this layer. This is the layer of
+      token objects, such as players and items, which draw on top
+      of the space layer."""
+
     VOID = -999
-    # The layer of gaps, or empty white impassible space.
     GAP = 0
-    # Any space which does not fall on another layer goes here.
     REGULAR = 1
-    # The tokens on the board.
     TOKEN = 999
 
 
 class Renderer:
+    """Image renderer for converting a board object into a PNG image
+    file. For most simpleuse cases, you can simply use one of the
+    OutputProducers defined in this module and won't need to interface
+    directly with this class. But this class can be used for
+    fine-grained control over layering."""
+
     config: ConfigFile
     board: Board
     image: Image.Image
@@ -34,6 +52,8 @@ class Renderer:
         self.image = Image.new("RGBA", (image_width, image_height))
 
     def render_layer(self, layer: Layer) -> None:
+        """Render the spaces associated with the given layer. If the
+        layer is Layer.TOKEN, also render the tokens on the board."""
         self._render_spaces(layer)
         if layer is Layer.TOKEN:
             self._render_tokens()
@@ -58,10 +78,14 @@ class Renderer:
                 self.image.paste(token_image, (topleft_x + dx, topleft_y + dy), token_image)
 
     def build(self) -> Image.Image:
+        """Return the image being constructed. This renderer should be
+        considered consumed once this method has been called."""
         return self.image
 
 
 def render_image(config: ConfigFile, board: Board) -> Image.Image:
+    """Render the board to an image file by drawing the layers in
+    order."""
     renderer = Renderer(config, board)
     for layer in Layer:
         renderer.render_layer(layer)
@@ -70,9 +94,7 @@ def render_image(config: ConfigFile, board: Board) -> Image.Image:
 
 def get_layer(space_name: str) -> Layer:
     """Which layer the spaces are drawn on. Gaps are always drawn
-    before other spaces, so they sit on a layer below others.
-
-    """
+    before other spaces, so they sit on a layer below others."""
     if space_name == 'gap':
         return Layer.GAP
     else:
@@ -80,6 +102,7 @@ def get_layer(space_name: str) -> Layer:
 
 
 class DisplayedImageProducer(OutputProducer):
+    """OutputProducer that outputs an image to a new on-screen window."""
 
     def produce_output(self, config: ConfigFile, board: Board) -> None:
         image = render_image(config, board)
@@ -87,6 +110,7 @@ class DisplayedImageProducer(OutputProducer):
 
 
 class SavedImageProducer(OutputProducer):
+    """OutputProducer that outputs an image to the given file."""
     output_filename: str
 
     def __init__(self, output_filename: str) -> None:

@@ -1,4 +1,7 @@
 
+"""The WUAS rendering engine 2.0. See README.md for more, or use --help
+for help with the command line arguments."""
+
 from wuas.loader import load_from_file
 from wuas.validator import validate
 from wuas.config import ConfigFile

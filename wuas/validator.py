@@ -1,4 +1,6 @@
 
+"""Validator for a WUAS board."""
+
 from __future__ import annotations
 
 from wuas.board import Board, BoardIntegrityError
@@ -10,6 +12,10 @@ class ValidationError(Exception):
 
 
 def validate(config: ConfigFile, board: Board) -> None:
+    """Perform sanity checks on the board, making sure that all
+    references spaces, tokens, and items actually exist in the
+    configuration file. On validation failure, a ValidationError is
+    raised. On success, this function returns None."""
     definitions = config.definitions
     for x, y in board.indices:
         try:

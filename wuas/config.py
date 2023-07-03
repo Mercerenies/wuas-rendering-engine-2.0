@@ -1,4 +1,7 @@
 
+"""Parser for the configuration JSON file, as well as the other related
+JSON files it references."""
+
 from __future__ import annotations
 
 from PIL import Image
@@ -10,8 +13,10 @@ from functools import cached_property
 
 
 def normalize_space_name(name: str) -> str:
-    # As a hard-coded alias, spaces that are totally empty are treated
-    # as "gap" spaces.
+    """To make the datafile format more readable, a space whose name is
+    '' is treated as a 'gap' space. This function performs that
+    transformation, returning 'gap' if the input is '', or returning the
+    input unmodified otherwise."""
     if name == '':
         return 'gap'
     else:
@@ -19,45 +24,65 @@ def normalize_space_name(name: str) -> str:
 
 
 class ConfigFile:
+    """A configuration file containing data about the spaces, items,
+    tokens, and other effects available in a particular game of WUAS."""
+
     _json_data: Any
 
     def __init__(self, json_data: Any) -> None:
+        """Construct a configuration object from the given JSON-like
+        value."""
         self._json_data = json_data
 
     @classmethod
     def from_json(cls, filename: str) -> ConfigFile:
+        """Read the configuration data from the JSON file with the given
+        name."""
         with open(filename, 'r') as json_file:
             return cls(json.load(json_file))
 
     @cached_property
     def definitions(self) -> DefinitionsFile:
+        """The definitions file which provides descriptions of effects."""
         return DefinitionsFile.from_json(filename=self._json_data['files']['dict'])
 
     @cached_property
     def spaces_png(self) -> SpacesPng:
+        """The image representing all of the spaces."""
         return SpacesPng(Image.open(self._json_data['files']['spaces']))
 
     @cached_property
     def tokens_png(self) -> TokensPng:
+        """The image representing all of the tokens, both player and otherwise."""
         return TokensPng(Image.open(self._json_data['files']['tokens']))
 
     @property
     def meta(self) -> dict[str, Any]:
+        """A dictionary of metadata, whose format is unspecified but
+        which can be used to store arbitrary key-value data in the
+        configuration file."""
         return self._json_data['meta']
 
 
 class DefinitionsFile:
+    """The file containing the descriptions of all spaces, tokens, and
+    other effects in the game."""
+
     _json_data: Any
 
     def __init__(self, json_data: Any) -> None:
+        """Construct DefinitionsFile from a JSON-like structure."""
         self._json_data = json_data
 
     @classmethod
     def from_json(cls, filename: str) -> DefinitionsFile:
+        """Parse DefinitionsFile from the given JSON file."""
         with open(filename, 'r') as json_file:
             return cls(json.load(json_file))
 
     def has_space(self, key: str) -> bool:
+        """Returns true if the space with the given name exists. This
+        function performs space name normalization with normalize_space_name."""
         try:
             self.get_space(key)
             return True
@@ -65,6 +90,7 @@ class DefinitionsFile:
             return False
 
     def has_item(self, key: str) -> bool:
+        """Returns true if the item with the given name exists."""
         try:
             self.get_item(key)
             return True
@@ -72,6 +98,7 @@ class DefinitionsFile:
             return False
 
     def has_token(self, key: str) -> bool:
+        """Returns true if the token with the given name exists."""
         try:
             self.get_token(key)
             return True
@@ -79,18 +106,26 @@ class DefinitionsFile:
             return False
 
     def get_space(self, key: str) -> SpaceDefinition:
+        """Returns the space with the given name, after normalizing with
+        normalize_space_name. Raises KeyError ifit doesn't exist."""
         key = normalize_space_name(key)
         return SpaceDefinition.from_json_data(self._json_data['spaces'][key])
 
     def get_item(self, key: str) -> ItemDefinition:
+        """Returns the item with the given name, raising KeyError if it doesn't
+        exist."""
         return ItemDefinition.from_json_data(self._json_data['items'][key])
 
     def get_token(self, key: str) -> TokenDefinition:
+        """Returns the token with the given name, raising KeyError if it doesn't
+        exist."""
         return TokenDefinition.from_json_data(self._json_data['tokens'][key])
 
 
 @dataclass(frozen=True)
 class SpaceDefinition:
+    """The definition of a space, according to a DefinitionsFile."""
+
     name: str
     coords: tuple[int, int, int, int]
     visual: str
@@ -109,6 +144,8 @@ class SpaceDefinition:
 
 @dataclass(frozen=True)
 class ItemDefinition:
+    """The definition of an item, according to a DefinitionsFile."""
+
     name: str
     desc: str
 
@@ -122,6 +159,8 @@ class ItemDefinition:
 
 @dataclass(frozen=True)
 class TokenDefinition:
+    """The definition of a token, according to a DefinitionsFile."""
+
     name: str
     stats: str
     thumbnail: tuple[int, int]

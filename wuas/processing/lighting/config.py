@@ -10,6 +10,8 @@ from typing import Any
 
 @dataclass
 class LightingConfig:
+    """The portion of the configuration metadata which represents the
+    lighting engine's settings."""
     darkness: str
     spaces: dict[str, int]
     items: dict[str, int]
@@ -42,6 +44,8 @@ DEFAULT_ITEM_LIGHT = 1
 
 
 class ConfigLightSourceSupplier(LightSourceSupplier):
+    """Light source supplier that reads from the board and the given
+    lighting configuration file."""
     _config: LightingConfig
     _board: Board
 

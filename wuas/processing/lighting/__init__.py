@@ -87,18 +87,30 @@ class LightingEngine:
 
 
 class LightingGrid:
+    """The lighting grid consists of a two-dimensional grid of integers
+    and a dirty bit. The dirty bit is publicly read-write and can be
+    used to run a lighting loop until a steady state is reached."""
+
     is_dirty: bool
     _grid: list[list[int]]
 
     def __init__(self, width: int, height: int) -> None:
+        """Constructs a lighting grid of the given width and height
+        where all values are initially zero."""
         self.is_dirty = False
         self._grid = [[0] * width for _ in range(height)]
 
     def __getitem__(self, index: tuple[int, int]) -> int:
+        """Get the light at the given position. Raises KeyError if out
+        of bounds."""
         x, y = index
         return self._grid[y][x]
 
     def update(self, index: tuple[int, int], new_light: int) -> None:
+        """Set the light level at the given position to the maximum of
+        its current value and the proposed new value. If this actually
+        ends up changing the value, then this method sets is_dirty to
+        true."""
         x, y = index
         old_light = self._grid[y][x]
         new_light = max(self._grid[y][x], new_light)
@@ -107,6 +119,7 @@ class LightingGrid:
             self.is_dirty = True
 
     def reset_dirty_bit(self) -> None:
+        """Set is_dirty to false."""
         self.is_dirty = False
 
 

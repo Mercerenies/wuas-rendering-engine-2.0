@@ -1,4 +1,7 @@
 
+"""Rendering functions which output JSON in a format compatible with the
+WUAS interactive web UI."""
+
 from __future__ import annotations
 
 from wuas.board import Board
@@ -24,6 +27,8 @@ class Token(TypedDict):
 
 
 def render_to_json(board: Board) -> WuasJsonOutput:
+    """Return a JSON-like structure representing the board in a way
+    compatible with the WUAS web UI."""
     spaces = _render_spaces(board)
     tokens = _render_tokens(board)
 
@@ -58,6 +63,8 @@ def _render_tokens(board: Board) -> list[Token]:
 
 
 class JsonProducer(OutputProducer):
+    """Dumps the board, as JSON, to the given I/O object."""
+
     _io: TextIO
 
     def __init__(self, io: TextIO) -> None:
@@ -65,6 +72,7 @@ class JsonProducer(OutputProducer):
 
     @classmethod
     def stdout(cls) -> JsonProducer:
+        """JsonProducer which outputs to sys.stdout."""
         return cls(sys.stdout)
 
     def produce_output(self, config: ConfigFile, board: Board) -> None:

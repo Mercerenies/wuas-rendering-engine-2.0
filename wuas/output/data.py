@@ -5,9 +5,7 @@ be exactly equal.
 
 For instance, this file will normalize whitespace. It will also always
 output the most recent file format version, even if the input file was
-given in an earlier format.
-
-"""
+given in an earlier format."""
 
 from __future__ import annotations
 
@@ -28,6 +26,8 @@ HEADER_SLOT = '+' + '-' * SPACE_TEXT_WIDTH
 
 
 def render_to_data_file(board: Board, output_file: TextIO) -> None:
+    """Render the board to the given file-like object, which must be
+    opened for output."""
 
     # Introductory comments
     for comment_line in COMMENT_LINES:
@@ -87,13 +87,19 @@ def _print_token_references(board: Board, output_file: TextIO) -> None:
 
 
 class DatafileProducer(OutputProducer):
+    """OutputProducer that outputs to a given file-like object."""
+
     _io: TextIO
 
     def __init__(self, io: TextIO) -> None:
+        """A datafile producer for the given file-like object. The
+        object must be opened for writing. This class is NOT responsible
+        for closing the file object."""
         self._io = io
 
     @classmethod
     def stdout(cls) -> DatafileProducer:
+        """A datafile producer which prints to sys.stdout."""
         return cls(sys.stdout)
 
     def produce_output(self, config: ConfigFile, board: Board) -> None:

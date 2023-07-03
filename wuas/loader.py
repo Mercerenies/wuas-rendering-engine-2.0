@@ -1,4 +1,6 @@
 
+"""Parser for the WUAS datafile format."""
+
 from __future__ import annotations
 
 from wuas.board import Board, TileData, Token
