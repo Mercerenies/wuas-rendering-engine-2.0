@@ -29,6 +29,19 @@ class Board:
         else:
             return len(self._data[0])
 
+    def resize(self, new_left: int, new_top: int, new_right: int, new_bottom: int, initial_value: str) -> None:
+        # Left and Right
+        for y in range(self.height):
+            left = [TileData(initial_value, []) for _ in range(new_left)]
+            right = [TileData(initial_value, []) for _ in range(new_right)]
+            self._data[y] = left + self._data[y] + right
+        # Top
+        for _ in range(new_top):
+            self._data.insert(0, [TileData(initial_value, []) for _ in range(self.width)])
+        # Bottom
+        for _ in range(new_bottom):
+            self._data.append([TileData(initial_value, []) for _ in range(self.width)])
+
     def in_bounds(self, x: int, y: int) -> bool:
         return 0 <= x < self.width and 0 <= y < self.height
 

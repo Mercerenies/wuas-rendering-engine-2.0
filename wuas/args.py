@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from wuas.output import OutputProducer, DisplayedImageProducer, SavedImageProducer, JsonProducer, DatafileProducer
-from wuas.processing import BoardProcessor, LightingProcessor, game2023_terrain
+from wuas.processing import BoardProcessor, LightingProcessor, game2023_terrain, game2023_spawnterrain, game2023_spawnfire
 
 import argparse
 from dataclasses import dataclass
@@ -78,12 +78,16 @@ def interpret_output_producer(instruction: str, output_filename: str | None) -> 
 
 
 def interpret_processor(instruction: str) -> BoardProcessor:
-    choices = 'lighting, terrain2023'
+    choices = 'lighting, terrain2023, spawnfire2023'
     match instruction:
         case "lighting":
             return LightingProcessor()
         case "terrain2023":
             return game2023_terrain.TerrainProcessor()
+        case "spawnterrain2023":
+            return game2023_spawnterrain.SpawnTerrainProcessor()
+        case "spawnfire2023":
+            return game2023_spawnfire.SpawnFireProcessor()
         case _:
             raise ArgumentsError(f"Invalid board processor {instruction}, choices are {choices}")
 
