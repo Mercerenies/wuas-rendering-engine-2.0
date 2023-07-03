@@ -41,6 +41,10 @@ class ConfigFile:
     def tokens_png(self) -> TokensPng:
         return TokensPng(Image.open(self._json_data['files']['tokens']))
 
+    @property
+    def meta(self) -> dict[str, Any]:
+        return self._json_data['meta']
+
 
 class DefinitionsFile:
     _json_data: Any

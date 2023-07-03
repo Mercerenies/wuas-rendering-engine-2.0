@@ -16,4 +16,7 @@ board = load_from_file(args.input_filename)
 if args.validate:
     validate(config, board)
 
+for processor in args.board_processors:
+    processor.run(config, board)
+
 args.output_producer.produce_output(config, board)

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from wuas.output import OutputProducer, DisplayedImageProducer, SavedImageProducer, JsonProducer, DatafileProducer
+from wuas.processing import BoardProcessor, LightingProcessor
 
 import argparse
 from dataclasses import dataclass
@@ -15,6 +16,7 @@ class Arguments:
     output_filename: str | None
     config_filename: str
     validate: bool
+    board_processors: list[BoardProcessor]
     output_producer: OutputProducer
 
 
@@ -39,8 +41,7 @@ def interpret_args(namespace: argparse.Namespace) -> Arguments:
     input_filename = namespace.input_filename
     output_filename = namespace.output_filename
 
-    # Intermediate operations not currently permitted (TODO)
-    assert len(namespace.instructions) == 1
+    board_processors = [interpret_processor(instruction) for instruction in namespace.instructions[:-1]]
     output_producer = interpret_output_producer(namespace.instructions[-1], output_filename)
 
     return Arguments(
@@ -48,6 +49,7 @@ def interpret_args(namespace: argparse.Namespace) -> Arguments:
         input_filename=input_filename,
         output_filename=output_filename,
         validate=namespace.validate,
+        board_processors=board_processors,
         output_producer=output_producer,
     )
 
@@ -73,6 +75,15 @@ def interpret_output_producer(instruction: str, output_filename: str | None) -> 
             return DatafileProducer.stdout()
         case _:
             raise ArgumentsError(f"Invalid output producer {instruction}, choices are {choices}")
+
+
+def interpret_processor(instruction: str) -> BoardProcessor:
+    choices = 'lighting'
+    match instruction:
+        case "lighting":
+            return LightingProcessor()
+        case _:
+            raise ArgumentsError(f"Invalid board processor {instruction}, choices are {choices}")
 
 
 def parse_and_interpret_args() -> Arguments:

@@ -29,10 +29,13 @@ class Board:
         else:
             return len(self._data[0])
 
+    def in_bounds(self, x: int, y: int) -> bool:
+        return 0 <= x < self.width and 0 <= y < self.height
+
     # Returns a mutable object, to which changes affect the game board
     # itself.
     def get_space(self, x: int, y: int) -> Space:
-        if 0 <= x < self.width and 0 <= y < self.height:
+        if self.in_bounds(x, y):
             return Space(self._data[y][x], self._references)
         else:
             raise IndexError(f"Position {(x, y)} out of bounds in board of size {(self.width, self.height)}")
@@ -83,6 +86,14 @@ class Space:
     @property
     def token_ids(self) -> Sequence[str]:
         return self._tile_data.token_ids
+
+    @token_ids.setter
+    def token_ids(self, sequence: Sequence[str]) -> None:
+        # Check that they make sense
+        for token_id in sequence:
+            assert token_id in self._references
+        # Then assign to the tile data
+        self._tile_data.token_ids = list(sequence)
 
     def get_tokens(self) -> Sequence[Token]:
         try:
