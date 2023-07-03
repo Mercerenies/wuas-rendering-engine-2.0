@@ -6,6 +6,7 @@ from __future__ import annotations
 from wuas.processing.abc import BoardProcessor
 from wuas.board import Board
 from wuas.config import ConfigFile
+from wuas.processing.registry import registered_processor
 
 from copy import deepcopy
 
@@ -13,6 +14,7 @@ from copy import deepcopy
 # special-casing the rules.
 
 
+@registered_processor
 class TerrainProcessor(BoardProcessor):
 
     def run(self, config: ConfigFile, board: Board) -> None:

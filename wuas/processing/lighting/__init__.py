@@ -9,6 +9,7 @@ from __future__ import annotations
 from wuas.processing.lighting.config import LightingConfig, ConfigLightSourceSupplier
 from wuas.processing.lighting.source import LightSourceSupplier
 from wuas.processing.abc import BoardProcessor
+from wuas.processing.registry import registered_processor
 from wuas.board import Board
 from wuas.config import ConfigFile
 from wuas.util import lerp
@@ -16,6 +17,7 @@ from wuas.util import lerp
 from typing import Iterable, Iterator
 
 
+@registered_processor(aliases=["lighting"])
 class LightingProcessor(BoardProcessor):
 
     def run(self, config: ConfigFile, board: Board) -> None:
