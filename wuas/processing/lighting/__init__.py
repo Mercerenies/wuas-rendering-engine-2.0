@@ -11,8 +11,9 @@ from wuas.processing.lighting.source import LightSourceSupplier
 from wuas.processing.abc import BoardProcessor
 from wuas.board import Board
 from wuas.config import ConfigFile
+from wuas.util import lerp
 
-from typing import Iterator
+from typing import Iterable, Iterator
 
 
 class LightingProcessor(BoardProcessor):
@@ -61,10 +62,19 @@ class LightingEngine:
                             self._do_light_emission((x1, y1), self._lighting_grid[x0, y0] - 1)
 
     def _do_light_emission(self, position: tuple[int, int], power: int) -> None:
-        for light_level in range(power):
-            for x, y in _manhattan_circle(position, light_level):
+        for distance in range(power):
+            for x, y in _manhattan_circle(position, distance):
                 if self._board.in_bounds(x, y):
-                    self._lighting_grid.update((x, y), power - light_level)
+                    # Check if anything diminishes the light
+                    dampened_light_level = power - distance
+                    for x1, y1 in _get_intersected_spaces(position, (x, y)):
+                        if (x1, y1) == (x, y):
+                            # A dampening object will never dampen its own space.
+                            continue
+                        space_name = self._board.get_space(x1, y1).space_name
+                        dampen_factor = self._lighting_config.diminishing.get(space_name, 0)
+                        dampened_light_level -= dampen_factor
+                    self._lighting_grid.update((x, y), dampened_light_level)
 
     def darken_board(self) -> None:
         for x, y in self._board.indices:
@@ -104,3 +114,14 @@ def _manhattan_circle(origin: tuple[int, int], distance: int) -> Iterator[tuple[
         yrange = distance - abs(dx)
         for dy in range(- yrange, yrange + 1):
             yield (xorigin + dx, yorigin + dy)
+
+
+def _get_intersected_spaces(origin: tuple[int, int], destination: tuple[int, int]) -> Iterable[tuple[int, int]]:
+    xorigin, yorigin = (origin[0] + 0.5, origin[1] + 0.5)
+    xdest, ydest = (destination[0] + 0.5, destination[1] + 0.5)
+    result = set()
+    for i in range(50):
+        x = lerp(xorigin, xdest, i / 50)
+        y = lerp(yorigin, ydest, i / 50)
+        result.add((int(x), int(y)))
+    return result

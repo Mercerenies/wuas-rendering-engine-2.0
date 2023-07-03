@@ -15,6 +15,7 @@ class LightingConfig:
     items: dict[str, int]
     tokens: dict[str, int]
     adjacency: dict[str, str]
+    diminishing: dict[str, int]
 
     @classmethod
     def from_json(cls, json_data: Any) -> LightingConfig:
@@ -24,6 +25,7 @@ class LightingConfig:
             items=_validate_dict(json_data['items']),
             tokens=_validate_dict(json_data['tokens']),
             adjacency=json_data['adjacency'],
+            diminishing=json_data['diminishing'],
         )
 
 
