@@ -97,6 +97,14 @@ class DefinitionsFile:
         except KeyError:
             return False
 
+    def has_attribute(self, key: str) -> bool:
+        """Returns true if the attribute with the given name exists."""
+        try:
+            self.get_attribute(key)
+            return True
+        except KeyError:
+            return False
+
     def has_token(self, key: str) -> bool:
         """Returns true if the token with the given name exists."""
         try:
@@ -115,6 +123,11 @@ class DefinitionsFile:
         """Returns the item with the given name, raising KeyError if it doesn't
         exist."""
         return ItemDefinition.from_json_data(self._json_data['items'][key])
+
+    def get_attribute(self, key: str) -> ItemDefinition:
+        """Returns the attribute with the given name, raising KeyError
+        if it doesn't exist."""
+        return AttributeDefinition.from_json_data(self._json_data['items'][key])
 
     def get_token(self, key: str) -> TokenDefinition:
         """Returns the token with the given name, raising KeyError if it doesn't
@@ -153,6 +166,24 @@ class ItemDefinition:
     def from_json_data(cls, json_data: Any) -> ItemDefinition:
         return cls(
             name=json_data['name'],
+            desc=json_data['desc'],
+        )
+
+
+@dataclass(frozen=True)
+class AttributeDefinition:
+    """The definition of a space attribute, according to a
+    DefinitionsFile."""
+
+    name: str
+    outlinecolor: str
+    desc: str
+
+    @classmethod
+    def from_json_data(cls, json_data: Any) -> AttributeDefinition:
+        return cls(
+            name=json_data['name'],
+            outlinecolor=json_data['outlinecolor'],
             desc=json_data['desc'],
         )
 
