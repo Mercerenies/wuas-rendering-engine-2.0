@@ -176,7 +176,7 @@ class AttributeDefinition:
     DefinitionsFile."""
 
     name: str
-    outlinecolor: str
+    outlinecolor: str | None
     desc: str
 
     @classmethod

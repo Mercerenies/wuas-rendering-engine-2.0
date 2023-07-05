@@ -6,7 +6,7 @@ from wuas.config import ConfigFile
 from wuas.constants import SPACE_WIDTH, SPACE_HEIGHT
 from wuas.output.abc import OutputProducer
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
 from enum import IntEnum
 
@@ -65,6 +65,11 @@ class Renderer:
                 space_data = self.config.definitions.get_space(space.space_name)
                 space_image = self.config.spaces_png.select(space_data.coords)
                 self.image.paste(space_image, (x * SPACE_WIDTH, y * SPACE_HEIGHT), space_image)
+                # Attributes for this space
+                for attribute in space.get_attributes():
+                    attribute_data = self.config.definitions.get_attribute(attribute.name)
+                    if attribute_data.outlinecolor is not None:
+                        self._highlight_space(x, y, attribute_data.outlinecolor)
 
     def _render_tokens(self) -> None:
         for x, y in self.floor.indices:
@@ -76,6 +81,18 @@ class Renderer:
                 token_image = self.config.tokens_png.select(token_data.thumbnail)  # TODO Span
                 dx, dy = token.position
                 self.image.paste(token_image, (topleft_x + dx, topleft_y + dy), token_image)
+
+    def _highlight_space(self, x: int, y: int, outline_color: str) -> None:
+        draw = ImageDraw.Draw(self.image)
+        x0 = x * SPACE_WIDTH + 2
+        y0 = y * SPACE_HEIGHT + 2
+        x1 = x0 + SPACE_WIDTH - 4
+        y1 = y0 + SPACE_HEIGHT - 4
+        draw.line(
+            [(x0, y0), (x0, y1), (x1, y1), (x1, y0), (x0, y0)],
+            fill=outline_color,
+            width=3,
+        )
 
     def build(self) -> Image.Image:
         """Return the image being constructed. This renderer should be
