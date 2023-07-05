@@ -14,11 +14,20 @@ import json
 from typing import TypedDict, TypeAlias, TextIO
 
 WuasJsonOutput: TypeAlias = 'dict[str, FloorData]'
+SpaceData: TypeAlias = 'str | ExpandedSpaceData'
 
 
 class FloorData(TypedDict):
-    spaces: list[list[str]]
+    spaces: list[list[SpaceData]]
     tokens: list[Token]
+
+
+class ExpandedSpaceData(TypedDict):
+    """Spaces can be simple strings if they have no attributes. If
+    they have attributes, then the expanded form consists of this
+    dictionary."""
+    space: str
+    attributes: list[str]
 
 
 class Token(TypedDict):
@@ -37,13 +46,21 @@ def render_to_json(board: Board) -> WuasJsonOutput:
     return result
 
 
-def _render_spaces(floor: Floor) -> list[list[str]]:
+def _render_spaces(floor: Floor) -> list[list[SpaceData]]:
     spaces = []
     for y in range(floor.height):
         row = []
         for x in range(floor.width):
             current_space = floor.get_space(x, y)
-            row.append(normalize_space_name(current_space.space_name))
+            space_data: SpaceData
+            if current_space.get_attributes():
+                space_data = {
+                    "space": normalize_space_name(current_space.space_name),
+                    "attributes": [attr.name for attr in current_space.get_attributes()],
+                }
+            else:
+                space_data = normalize_space_name(current_space.space_name)
+            row.append(space_data)
         spaces.append(row)
     return spaces
 

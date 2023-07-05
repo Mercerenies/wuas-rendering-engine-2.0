@@ -51,6 +51,11 @@ def render_to_data_file(board: Board, output_file: TextIO) -> None:
 
     # Token reference
     _print_token_references(board, output_file)
+    output_file.write('\n')
+
+    # Attribute reference
+    _print_attribute_references(board, output_file)
+    output_file.write('\n')
 
 
 def _print_board_contents(floor: Floor, output_file: TextIO) -> None:
@@ -64,7 +69,8 @@ def _print_board_contents(floor: Floor, output_file: TextIO) -> None:
         output_file.write('|')
         for x in range(width):
             space = floor.get_space(x, y)
-            output_file.write(' {:<{}}|'.format(space.space_name, SPACE_TEXT_WIDTH - 1))
+            space_text = space.space_name + ''.join(space.attribute_ids)
+            output_file.write(' {:<{}}|'.format(space_text, SPACE_TEXT_WIDTH - 1))
         output_file.write('\n')
         # Tokens layer
         output_file.write('|')
@@ -88,6 +94,11 @@ def _print_token_references(board: Board, output_file: TextIO) -> None:
             value.position[0],
             value.position[1],
         ))
+
+
+def _print_attribute_references(board: Board, output_file: TextIO) -> None:
+    for key, value in board.attributes.items():
+        output_file.write(f"{key} {value.name}")
 
 
 class DatafileProducer(OutputProducer):

@@ -21,6 +21,7 @@ def validate(config: ConfigFile, board: Board) -> None:
         try:
             space = board.get_space(x, y, z)
             tokens = space.get_tokens()
+            attrs = space.get_attributes()
         except BoardIntegrityError as exc:
             raise ValidationError("Integrity error in the board .dat file") from exc
         # Verify that the space and any tokens/items on it actually
@@ -32,3 +33,6 @@ def validate(config: ConfigFile, board: Board) -> None:
                 raise ValidationError(f"No such token {token_data.token_name}")
             if token_data.item_name and not definitions.has_item(token_data.item_name):
                 raise ValidationError(f"No such item {token_data.item_name}")
+        for attr_data in attrs:
+            if not definitions.has_attribute(attr_data.name):
+                raise ValidationError(f"No such attribute {attr_data.name}")

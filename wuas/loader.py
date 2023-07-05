@@ -3,9 +3,9 @@
 
 from __future__ import annotations
 
-from wuas.board import Board, TileData, Token
+from wuas.board import Board, TileData, Token, Attribute
 
-from typing import TextIO
+from typing import TextIO, NamedTuple
 import re
 
 
@@ -36,14 +36,18 @@ def load_from_io(io: TextIO) -> Board:
 
     floors = _read_floors(io, version)
     token_data = _read_tokens(io)
+    if version >= 3:
+        attr_data = _read_attrs(io)
+    else:
+        attr_data = {}
 
-    return Board(floors, token_data, meta)
+    return Board(floors, token_data, attr_data, meta)
 
 
 def _read_floors(io: TextIO, version: int) -> dict[int, list[list[TileData]]]:
     if version < 3:
         # Versions 1 and 2 don't have floors, so put everything on floor 0.
-        board_table = _read_board(io)
+        board_table = _read_board(io, version)
         return {0: board_table}
     else:
         # The floors of the board
@@ -58,11 +62,11 @@ def _read_floors(io: TextIO, version: int) -> dict[int, list[list[TileData]]]:
             floor_number = int(header_line[6:])
             if floor_number in floors:
                 raise RuntimeError(f"Duplicate floor {floor_number}")
-            board_table = _read_board(io)
+            board_table = _read_board(io, version)
             floors[floor_number] = board_table
 
 
-def _read_board(io: TextIO) -> list[list[TileData]]:
+def _read_board(io: TextIO, version: int) -> list[list[TileData]]:
     result = []
     while True:
         io.readline()  # Ignore the header
@@ -74,7 +78,13 @@ def _read_board(io: TextIO) -> list[list[TileData]]:
         space_data = [space.strip() for space in _split_at_bars(space_row)]
         token_data = [token.strip() for token in _split_at_bars(io.readline())]
         assert len(space_data) == len(token_data)
-        result.append([TileData(space_name, list(token)) for space_name, token in zip(space_data, token_data)])
+        row = []
+        for i in range(len(space_data)):
+            space = space_data[i]
+            token = token_data[i]
+            space_name, attrs = _parse_space(space, version)
+            row.append(TileData(space_name, list(token), attrs))
+        result.append(row)
     return result
 
 
@@ -84,13 +94,25 @@ def _split_at_bars(text: str) -> list[str]:
 
 def _read_tokens(io: TextIO) -> dict[str, Token]:
     result = {}
-    while line := io.readline():
+    line = io.readline()
+    while line != '' and line != '\n':
         abbreviation, name, item_name, x, y = line.split()
         result[abbreviation] = Token(
             token_name=name,
             item_name=None if item_name == 'nil' else item_name,
             position=(int(x), int(y)),
         )
+        line = io.readline()
+    return result
+
+
+def _read_attrs(io: TextIO) -> dict[str, Attribute]:
+    result = {}
+    line = io.readline()
+    while line != '' and line != '\n':
+        abbreviation, name = line.split()
+        result[abbreviation] = Attribute(name)
+        line = io.readline()
     return result
 
 
@@ -103,3 +125,22 @@ def _read_meta(io: TextIO) -> dict[str, str]:
         result[key] = value
         line = io.readline()
     return result
+
+
+def _parse_space(space: str, version: int) -> SpaceParseResult:
+    if version < 3:
+        # Versions 1 and 2 of the API have an ad-hoc rule that removes
+        # stars and question marks. They do NOT have attributes.
+        space = space.replace("*", "").replace("?", "")
+        return SpaceParseResult(space, [])
+    else:
+        # The space's proper name is a sequence of alphanumeric
+        # characters. Anything else is an attribute reference.
+        m = re.match(r"^([A-Za-z]+)(.*)$", space)
+        assert m
+        return SpaceParseResult(m[1], list(m[2]))
+
+
+class SpaceParseResult(NamedTuple):
+    space_name: str
+    attributes: list[str]

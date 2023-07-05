@@ -124,10 +124,10 @@ class DefinitionsFile:
         exist."""
         return ItemDefinition.from_json_data(self._json_data['items'][key])
 
-    def get_attribute(self, key: str) -> ItemDefinition:
+    def get_attribute(self, key: str) -> AttributeDefinition:
         """Returns the attribute with the given name, raising KeyError
         if it doesn't exist."""
-        return AttributeDefinition.from_json_data(self._json_data['items'][key])
+        return AttributeDefinition.from_json_data(self._json_data['attributes'][key])
 
     def get_token(self, key: str) -> TokenDefinition:
         """Returns the token with the given name, raising KeyError if it doesn't
