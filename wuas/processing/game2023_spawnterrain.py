@@ -16,7 +16,8 @@ class SpawnTerrainProcessor(BoardProcessor):
 
     def run(self, config: ConfigFile, board: Board) -> None:
         board.resize(3, 3, 3, 3, "")
-        for x, y in board.indices:
-            space = board.get_space(x, y)
-            if space.space_name == '':
-                space.space_name = random.choice(['tree', 'dirt', 'grass'])
+        for floor in board.floors.values():
+            for x, y in floor.indices:
+                space = floor.get_space(x, y)
+                if space.space_name == '':
+                    space.space_name = random.choice(['tree', 'dirt', 'grass'])

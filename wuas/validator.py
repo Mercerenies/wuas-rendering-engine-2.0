@@ -17,9 +17,9 @@ def validate(config: ConfigFile, board: Board) -> None:
     configuration file. On validation failure, a ValidationError is
     raised. On success, this function returns None."""
     definitions = config.definitions
-    for x, y in board.indices:
+    for x, y, z in board.indices:
         try:
-            space = board.get_space(x, y)
+            space = board.get_space(x, y, z)
         except BoardIntegrityError as exc:
             raise ValidationError("Integrity error in the board .dat file") from exc
         # Verify that the space and any tokens/items on it actually

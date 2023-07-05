@@ -53,9 +53,9 @@ class ConfigLightSourceSupplier(LightSourceSupplier):
         self._config = config
         self._board = board
 
-    def get_light_source(self, position: tuple[int, int]) -> int:
-        x, y = position
-        space = self._board.get_space(x, y)
+    def get_light_source(self, position: tuple[int, int, int]) -> int:
+        x, y, z = position
+        space = self._board.get_space(x, y, z)
         lights = [self._token_light(token) for token in space.get_tokens()]
         lights.append(self._config.spaces.get(space.space_name, DEFAULT_SPACE_LIGHT))
         return max(lights)

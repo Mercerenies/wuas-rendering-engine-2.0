@@ -1,7 +1,7 @@
 
 """Output format which renders to a PNG image."""
 
-from wuas.board import Board
+from wuas.board import Board, Floor
 from wuas.config import ConfigFile
 from wuas.constants import SPACE_WIDTH, SPACE_HEIGHT
 from wuas.output.abc import OutputProducer
@@ -41,14 +41,14 @@ class Renderer:
     fine-grained control over layering."""
 
     config: ConfigFile
-    board: Board
+    floor: Floor
     image: Image.Image
 
-    def __init__(self, config: ConfigFile, board: Board) -> None:
+    def __init__(self, config: ConfigFile, floor: Floor) -> None:
         self.config = config
-        self.board = board
-        image_width = SPACE_WIDTH * board.width
-        image_height = SPACE_HEIGHT * board.height
+        self.floor = floor
+        image_width = SPACE_WIDTH * floor.width
+        image_height = SPACE_HEIGHT * floor.height
         self.image = Image.new("RGBA", (image_width, image_height))
 
     def render_layer(self, layer: Layer) -> None:
@@ -59,16 +59,16 @@ class Renderer:
             self._render_tokens()
 
     def _render_spaces(self, layer: Layer) -> None:
-        for x, y in self.board.indices:
-            space = self.board.get_space(x, y)
+        for x, y in self.floor.indices:
+            space = self.floor.get_space(x, y)
             if get_layer(space.space_name) is layer:
                 space_data = self.config.definitions.get_space(space.space_name)
                 space_image = self.config.spaces_png.select(space_data.coords)
                 self.image.paste(space_image, (x * SPACE_WIDTH, y * SPACE_HEIGHT), space_image)
 
     def _render_tokens(self) -> None:
-        for x, y in self.board.indices:
-            space = self.board.get_space(x, y)
+        for x, y in self.floor.indices:
+            space = self.floor.get_space(x, y)
             topleft_x = x * SPACE_WIDTH
             topleft_y = y * SPACE_HEIGHT
             for token in space.get_tokens():
@@ -83,10 +83,10 @@ class Renderer:
         return self.image
 
 
-def render_image(config: ConfigFile, board: Board) -> Image.Image:
-    """Render the board to an image file by drawing the layers in
+def render_image(config: ConfigFile, floor: Floor) -> Image.Image:
+    """Render the floor to an image file by drawing the layers in
     order."""
-    renderer = Renderer(config, board)
+    renderer = Renderer(config, floor)
     for layer in Layer:
         renderer.render_layer(layer)
     return renderer.build()
@@ -103,19 +103,25 @@ def get_layer(space_name: str) -> Layer:
 
 class DisplayedImageProducer(OutputProducer):
     """OutputProducer that outputs an image to a new on-screen window."""
+    _floor_number: int
+
+    def __init__(self, floor_number: int) -> None:
+        self._floor_number = floor_number
 
     def produce_output(self, config: ConfigFile, board: Board) -> None:
-        image = render_image(config, board)
+        image = render_image(config, board.floors[self._floor_number])
         image.show()
 
 
 class SavedImageProducer(OutputProducer):
     """OutputProducer that outputs an image to the given file."""
     output_filename: str
+    _floor_number: int
 
-    def __init__(self, output_filename: str) -> None:
+    def __init__(self, output_filename: str, floor_number: int) -> None:
         self.output_filename = output_filename
+        self._floor_number = floor_number
 
     def produce_output(self, config: ConfigFile, board: Board) -> None:
-        image = render_image(config, board)
+        image = render_image(config, board.floors[self._floor_number])
         image.save(self.output_filename)

@@ -4,7 +4,7 @@ WUAS interactive web UI."""
 
 from __future__ import annotations
 
-from wuas.board import Board
+from wuas.board import Board, Floor
 from wuas.config import ConfigFile, normalize_space_name
 from wuas.constants import SPACE_WIDTH, SPACE_HEIGHT
 from wuas.output.abc import OutputProducer
@@ -13,10 +13,10 @@ import sys
 import json
 from typing import TypedDict, TypeAlias, TextIO
 
-WuasJsonOutput: TypeAlias = 'dict[str, Floor]'
+WuasJsonOutput: TypeAlias = 'dict[str, FloorData]'
 
 
-class Floor(TypedDict):
+class FloorData(TypedDict):
     spaces: list[list[str]]
     tokens: list[Token]
 
@@ -29,29 +29,29 @@ class Token(TypedDict):
 def render_to_json(board: Board) -> WuasJsonOutput:
     """Return a JSON-like structure representing the board in a way
     compatible with the WUAS web UI."""
-    spaces = _render_spaces(board)
-    tokens = _render_tokens(board)
+    result: WuasJsonOutput = {}
+    for z, floor in board.floors.items():
+        spaces = _render_spaces(floor)
+        tokens = _render_tokens(floor)
+        result[str(z)] = {'spaces': spaces, 'tokens': tokens}
+    return result
 
-    return {
-        '0': {'spaces': spaces, 'tokens': tokens},
-    }
 
-
-def _render_spaces(board: Board) -> list[list[str]]:
+def _render_spaces(floor: Floor) -> list[list[str]]:
     spaces = []
-    for y in range(board.height):
+    for y in range(floor.height):
         row = []
-        for x in range(board.width):
-            current_space = board.get_space(x, y)
+        for x in range(floor.width):
+            current_space = floor.get_space(x, y)
             row.append(normalize_space_name(current_space.space_name))
         spaces.append(row)
     return spaces
 
 
-def _render_tokens(board: Board) -> list[Token]:
+def _render_tokens(floor: Floor) -> list[Token]:
     tokens: list[Token] = []
-    for x, y in board.indices:
-        current_space = board.get_space(x, y)
+    for x, y in floor.indices:
+        current_space = floor.get_space(x, y)
         for token in current_space.get_tokens():
             object_name = token.item_name if token.item_name is not None else token.token_name
             dx, dy = token.position

@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from wuas.processing.abc import BoardProcessor
-from wuas.board import Board
+from wuas.board import Board, Floor
 from wuas.config import ConfigFile
 from wuas.processing.registry import registered_processor
 
@@ -19,13 +19,14 @@ class TerrainProcessor(BoardProcessor):
 
     def run(self, config: ConfigFile, board: Board) -> None:
         original_board = deepcopy(board)
-        for x, y in board.indices:
-            space = board.get_space(x, y)
-            adjacent = _get_adjacent_spaces(original_board, x, y)
-            space.space_name = _evaluate_terrain(space.space_name, adjacent)
+        for z, floor in board.floors.items():
+            for x, y in floor.indices:
+                space = floor.get_space(x, y)
+                adjacent = _get_adjacent_spaces(original_board.floors[z], x, y)
+                space.space_name = _evaluate_terrain(space.space_name, adjacent)
 
 
-def _get_adjacent_spaces(board: Board, x: int, y: int) -> list[str]:
+def _get_adjacent_spaces(floor: Floor, x: int, y: int) -> list[str]:
     result = []
     targets = [
         (x - 1, y - 1), (x    , y - 1), (x + 1, y - 1),  # noqa: E202, E203
@@ -34,8 +35,8 @@ def _get_adjacent_spaces(board: Board, x: int, y: int) -> list[str]:
     ]
     for target in targets:
         tx, ty = target
-        if board.in_bounds(tx, ty):
-            result.append(board.get_space(tx, ty).space_name)
+        if floor.in_bounds(tx, ty):
+            result.append(floor.get_space(tx, ty).space_name)
         else:
             result.append("gap")
     return result

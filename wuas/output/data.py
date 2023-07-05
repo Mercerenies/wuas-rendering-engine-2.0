@@ -9,7 +9,7 @@ given in an earlier format."""
 
 from __future__ import annotations
 
-from wuas.board import Board
+from wuas.board import Board, Floor
 from wuas.config import ConfigFile
 from wuas.output.abc import OutputProducer
 
@@ -43,15 +43,18 @@ def render_to_data_file(board: Board, output_file: TextIO) -> None:
     output_file.write('\n')
 
     # Board contents
-    _print_board_contents(board, output_file)
+    for z, floor in board.floors.items():
+        output_file.write(f"floor={z}\n")
+        _print_board_contents(floor, output_file)
+    output_file.write("\n")
 
     # Token reference
     _print_token_references(board, output_file)
 
 
-def _print_board_contents(board: Board, output_file: TextIO) -> None:
-    width = board.width
-    height = board.height
+def _print_board_contents(floor: Floor, output_file: TextIO) -> None:
+    width = floor.width
+    height = floor.height
     separator_row = HEADER_SLOT * width + '+'
 
     for y in range(height):
@@ -59,13 +62,13 @@ def _print_board_contents(board: Board, output_file: TextIO) -> None:
         # Spaces layer
         output_file.write('|')
         for x in range(width):
-            space = board.get_space(x, y)
+            space = floor.get_space(x, y)
             output_file.write(' {:<{}}|'.format(space.space_name, SPACE_TEXT_WIDTH - 1))
         output_file.write('\n')
         # Tokens layer
         output_file.write('|')
         for x in range(width):
-            space = board.get_space(x, y)
+            space = floor.get_space(x, y)
             output_file.write(' {:<{}}|'.format(''.join(space.token_ids), SPACE_TEXT_WIDTH - 1))
         output_file.write('\n')
     output_file.write(separator_row + '\n\n')

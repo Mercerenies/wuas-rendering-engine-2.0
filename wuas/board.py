@@ -5,73 +5,100 @@ WUAS board."""
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Mapping, Sequence, Iterable
+from typing import Mapping, Sequence, Iterator
 
 
 class Board:
     """The board object itself, which contains a two-dimensional grid of
     spaces, an ordered mapping of abbreviations to tokens and items, and
-    a mapping of keys to arbitrary string metadata."""
+    a mapping of keys to arbitrary string metadata.
 
-    # Board data is stored in row-major order.
-    _data: list[list[TileData]]
+    Invariant: All floors have the same width and height."""
+
+    _floors: dict[int, list[list[TileData]]]
     _references: dict[str, Token]
     # Meta data, included after the version number as a set of
     # key-value pairs.
     _meta: dict[str, str]
 
-    def __init__(self, data: list[list[TileData]], references: dict[str, Token], meta: dict[str, str]) -> None:
-        self._data = data
+    # TODO I don't like the complex type of floor_map
+    def __init__(self,
+                 floor_map: dict[int, list[list[TileData]]],
+                 references: dict[str, Token],
+                 meta: dict[str, str]) -> None:
+        """Construct a board consisting of the given floors. All floors
+        must have the same dimensions. This invariant is checked at
+        construction time."""
+        self._floors = floor_map
         self._references = references
         self._meta = meta
+        # Check that all floors have the same width and height
+        if self._floors:
+            first_floor = Floor(next(iter(self._floors.values())), references)
+            width = first_floor.width
+            height = first_floor.height
+            for key, floor_grid in self._floors.items():
+                floor = Floor(floor_grid, references)
+                if (floor.width, floor.height) != (width, height):
+                    raise BoardIntegrityError(f"Floor {key} has inconsistent width/height")
+
+    @property
+    def tokens(self) -> Mapping[str, Token]:
+        """The mapping from abbreviations to token objects."""
+        return self._references
+
+    @property
+    def floors(self) -> Mapping[int, Floor]:
+        return _FloorMapping(self._floors, self._references)
+
+    def get_space(self, x: int, y: int, z: int) -> Space:
+        """Return the space at the given position. This is a live view,
+        so mutations to the returned Space object will affect this Board
+        in real time. Raises IndexError if out of bounds."""
+        if self.in_bounds(x, y, z):
+            return self.floors[z].get_space(x, y)
+        else:
+            raise IndexError(f"Position {(x, y, z)} out of bounds in board of size {(self.width, self.height)}")
+
+    @property
+    def indices(self) -> Iterator[tuple[int, int, int]]:
+        for z, floor in sorted(self.floors.items(), key=lambda x: x[0]):
+            for x, y in floor.indices:
+                yield x, y, z
 
     @property
     def height(self) -> int:
         """The height of the board."""
-        return len(self._data)
+        if self.floors:
+            floor = next(iter(self.floors.values()))
+            return floor.height
+        else:
+            return 0
 
     @property
     def width(self) -> int:
-        """The width of the board. If the board has zero height, then it
-        will necessarily have zero width as well, due to the way boards
-        are stored internally.."""
-        if self.height == 0:
-            return 0
+        """The width of the board."""
+        if self.floors:
+            floor = next(iter(self.floors.values()))
+            return floor.width
         else:
-            return len(self._data[0])
+            return 0
 
     def resize(self, new_left: int, new_top: int, new_right: int, new_bottom: int, initial_value: str) -> None:
-        """Expand the board in each direction by the given amount. The
-        four integer arguments must be nonnegative. initial_value
-        specifies the space type to put in the new positions. Each new
-        position created in this way will initially have no tokens or
-        items on it."""
+        """Expand each floor of the board in each direction by the given
+        amount. The four integer arguments must be nonnegative.
+        initial_value specifies the space type to put in the new
+        positions. Each new position created in this way will initially
+        have no tokens oritems on it."""
+        for floor in self.floors.values():
+            floor.resize_unsafe(new_left, new_top, new_right, new_bottom, initial_value)
 
-        # Left and Right
-        for y in range(self.height):
-            left = [TileData(initial_value, []) for _ in range(new_left)]
-            right = [TileData(initial_value, []) for _ in range(new_right)]
-            self._data[y] = left + self._data[y] + right
-        # Top
-        for _ in range(new_top):
-            self._data.insert(0, [TileData(initial_value, []) for _ in range(self.width)])
-        # Bottom
-        for _ in range(new_bottom):
-            self._data.append([TileData(initial_value, []) for _ in range(self.width)])
-
-    def in_bounds(self, x: int, y: int) -> bool:
+    def in_bounds(self, x: int, y: int, z: int) -> bool:
         """Returns whether or not the given 0-based position in within
         the board's current bounds."""
+        if z not in self._floors:
+            return False
         return 0 <= x < self.width and 0 <= y < self.height
-
-    def get_space(self, x: int, y: int) -> Space:
-        """Return the space at the given position. This is a live view,
-        so mutations to the returned Space object will affect this Board
-        in real time. Raises IndexError if out of bounds."""
-        if self.in_bounds(x, y):
-            return Space(self._data[y][x], self._references)
-        else:
-            raise IndexError(f"Position {(x, y)} out of bounds in board of size {(self.width, self.height)}")
 
     def has_meta(self, key: str) -> bool:
         """Returns whether the key exists in this object's metadata table.
@@ -88,19 +115,101 @@ class Board:
         """The metadata mapping."""
         return self._meta
 
-    @property
-    def tokens(self) -> Mapping[str, Token]:
-        """The mapping from abbreviations to token objects."""
-        return self._references
+
+class Floor:
+    """A floor of the board, which contains a two-dimensional grid of spaces
+    and an ordered mapping of abbreviations to tokens and items.
+
+    This is a live reference to the Board, and modifications will affect
+    the board in real-time."""
+
+    # Board data is stored in row-major order.
+    _data: list[list[TileData]]
+    _references: dict[str, Token]
+
+    def __init__(self, data: list[list[TileData]], references: dict[str, Token]) -> None:
+        self._data = data
+        self._references = references
+
+    def in_bounds(self, x: int, y: int) -> bool:
+        """Returns whether or not the given 0-based position in within
+        the floor's current bounds."""
+        return 0 <= x < self.width and 0 <= y < self.height
 
     @property
-    def indices(self) -> Iterable[tuple[int, int]]:
+    def height(self) -> int:
+        """The height of the floor."""
+        return len(self._data)
+
+    @property
+    def width(self) -> int:
+        """The width of the floor. If the floor has zero height, then it
+        will necessarily have zero width as well, due to the way
+        boards are stored internally."""
+        if self.height == 0:
+            return 0
+        else:
+            return len(self._data[0])
+
+    def resize_unsafe(self, new_left: int, new_top: int, new_right: int, new_bottom: int, initial_value: str) -> None:
+        """Expand the floor in each direction by the given amount. The
+        four integer arguments must be nonnegative. initial_value
+        specifies the space type to put in the new positions. Each new
+        position created in this way will initially have no tokens or
+        items on it.
+
+        Note: This function is marked unsafe. You should use Board.resize,
+        which calls this function and enforces the invariant that all floors
+        have the same dimensions, instead of calling this function directly."""
+
+        # Left and Right
+        for y in range(self.height):
+            left = [TileData(initial_value, []) for _ in range(new_left)]
+            right = [TileData(initial_value, []) for _ in range(new_right)]
+            self._data[y] = left + self._data[y] + right
+        # Top
+        for _ in range(new_top):
+            self._data.insert(0, [TileData(initial_value, []) for _ in range(self.width)])
+        # Bottom
+        for _ in range(new_bottom):
+            self._data.append([TileData(initial_value, []) for _ in range(self.width)])
+
+    def get_space(self, x: int, y: int) -> Space:
+        """Return the space at the given position. This is a live view,
+        so mutations to the returned Space object will affect this Board
+        in real time. Raises IndexError if out of bounds."""
+        if self.in_bounds(x, y):
+            return Space(self._data[y][x], self._references)
+        else:
+            raise IndexError(f"Position {(x, y)} out of bounds in board of size {(self.width, self.height)}")
+
+    @property
+    def indices(self) -> Iterator[tuple[int, int]]:
         """All of the indices of this board. This property produces
         elements of the form (x, y) in row-major order (so all of the
         y=0 positions will be produced before any of the y=1 ones)."""
         for y in range(0, self.height):
             for x in range(0, self.width):
                 yield (x, y)
+
+
+class _FloorMapping(Mapping[int, Floor]):
+    _floors: dict[int, list[list[TileData]]]
+    _references: dict[str, Token]
+
+    def __init__(self, floors: dict[int, list[list[TileData]]], references: dict[str, Token]) -> None:
+        self._floors = floors
+        self._references = references
+
+    def __getitem__(self, floor_index: int) -> Floor:
+        tile_grid = self._floors[floor_index]
+        return Floor(tile_grid, self._references)
+
+    def __iter__(self) -> Iterator[int]:
+        return iter(self._floors)
+
+    def __len__(self) -> int:
+        return len(self._floors)
 
 
 @dataclass

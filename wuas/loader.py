@@ -9,7 +9,7 @@ from typing import TextIO
 import re
 
 
-KNOWN_VERSIONS = (1, 2)
+KNOWN_VERSIONS = (1, 2, 3)
 
 
 def load_from_file(filename: str) -> Board:
@@ -30,17 +30,36 @@ def load_from_io(io: TextIO) -> Board:
     if version == 1:
         # Version 1 parses no metadata
         meta = {}
-    elif version == 2:
-        # Version 2 parses key-value pairs until it hits a newline
+    elif version in (2, 3):
+        # Versions 2 and 3 parse key-value pairs until it hits a newline
         meta = _read_meta(io)
 
-    # The board text itself
-    board_table = _read_board(io)
-
-    # Tile reference data
+    floors = _read_floors(io, version)
     token_data = _read_tokens(io)
 
-    return Board(board_table, token_data, meta)
+    return Board(floors, token_data, meta)
+
+
+def _read_floors(io: TextIO, version: int) -> dict[int, list[list[TileData]]]:
+    if version < 3:
+        # Versions 1 and 2 don't have floors, so put everything on floor 0.
+        board_table = _read_board(io)
+        return {0: board_table}
+    else:
+        # The floors of the board
+        floors: dict[int, list[list[TileData]]] = {}
+        while True:
+            header_line = io.readline()
+            if header_line == '\n':
+                # No more floors, stop reading
+                return floors
+            if not header_line.startswith("floor="):
+                raise RuntimeError(f"Expecting floor number, got '{header_line}'")
+            floor_number = int(header_line[6:])
+            if floor_number in floors:
+                raise RuntimeError(f"Duplicate floor {floor_number}")
+            board_table = _read_board(io)
+            floors[floor_number] = board_table
 
 
 def _read_board(io: TextIO) -> list[list[TileData]]:
