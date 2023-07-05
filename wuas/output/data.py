@@ -23,6 +23,7 @@ COMMENT_LINES = (
 
 SPACE_TEXT_WIDTH = 10
 HEADER_SLOT = '+' + '-' * SPACE_TEXT_WIDTH
+CURRENT_VERSION_NUMBER = 3
 
 
 def render_to_data_file(board: Board, output_file: TextIO) -> None:
@@ -35,7 +36,7 @@ def render_to_data_file(board: Board, output_file: TextIO) -> None:
     output_file.write('\n')
 
     # Versioning
-    output_file.write('2\n')
+    output_file.write(str(CURRENT_VERSION_NUMBER) + '\n')
 
     # Meta data
     for k, v in board.meta.items():
