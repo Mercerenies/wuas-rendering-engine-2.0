@@ -136,9 +136,12 @@ def _parse_space(space: str, version: int) -> SpaceParseResult:
     else:
         # The space's proper name is a sequence of alphanumeric
         # characters. Anything else is an attribute reference.
-        m = re.match(r"^([A-Za-z]+)(.*)$", space)
-        assert m
-        return SpaceParseResult(m[1], list(m[2]))
+        if space == '':
+            return SpaceParseResult('', [])
+        else:
+            m = re.match(r"^([A-Za-z]+)(.*)$", space)
+            assert m
+            return SpaceParseResult(m[1], list(m[2]))
 
 
 class SpaceParseResult(NamedTuple):

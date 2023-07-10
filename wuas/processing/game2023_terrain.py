@@ -1,5 +1,5 @@
 
-"""The dirt/grass/tree terrain spread mechanics from the 2023 game."""
+"""The dirt/grass/tree/ash terrain spread mechanics from the 2023 game."""
 
 from __future__ import annotations
 
@@ -9,12 +9,13 @@ from wuas.config import ConfigFile
 from wuas.processing.registry import registered_processor
 
 from copy import deepcopy
+import random
 
 # I'm not going to pretend this fits into some .json configuration data. I'm
 # special-casing the rules.
 
 
-@registered_processor
+@registered_processor(aliases=["terrain2023"])
 class TerrainProcessor(BoardProcessor):
 
     def run(self, config: ConfigFile, board: Board) -> None:
@@ -44,6 +45,13 @@ def _get_adjacent_spaces(floor: Floor, x: int, y: int) -> list[str]:
 
 def _evaluate_terrain(current_space: str, adjacent_spaces: list[str]) -> str:
     match current_space:
+        case "ash":
+            # Ash spaces will absorb nearby grass, tree, and water spaces.
+            candidates = {"grass", "tree", "water"} & set(adjacent_spaces)
+            if candidates:
+                return random.choice(list(candidates))
+            else:
+                return "ash"
         case "dirt":
             if 'water' in adjacent_spaces or adjacent_spaces.count('grass') in [2, 3]:
                 return 'grass'

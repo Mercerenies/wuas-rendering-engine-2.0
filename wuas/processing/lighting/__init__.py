@@ -12,9 +12,10 @@ from wuas.processing.abc import BoardProcessor
 from wuas.processing.registry import registered_processor
 from wuas.board import Board
 from wuas.config import ConfigFile
-from wuas.util import lerp
+from wuas.util import lerp, manhattan_circle
 
-from typing import Iterable, Iterator
+from typing import Iterable
+import math
 
 
 @registered_processor(aliases=["lighting"])
@@ -65,13 +66,17 @@ class LightingEngine:
 
     def _do_light_emission(self, position: tuple[int, int, int], power: int) -> None:
         for distance in range(power):
-            for x, y, z in _manhattan_circle(position, distance):
+            for x, y, z in manhattan_circle(position, distance):
                 if self._board.in_bounds(x, y, z):
                     # Check if anything diminishes the light
                     dampened_light_level = power - distance
                     for x1, y1, z1 in _get_intersected_spaces(position, (x, y, z)):
                         if (x1, y1, z1) == (x, y, z):
                             # A dampening object will never dampen its own space.
+                            continue
+                        if not self._board.in_bounds(x, y, z):
+                            # The board isn't convex anymore, since
+                            # floors is a sparse array.
                             continue
                         space_name = self._board.get_space(x1, y1, z1).space_name
                         dampen_factor = self._lighting_config.diminishing.get(space_name, 0)
@@ -127,16 +132,6 @@ class LightingGrid:
         self.is_dirty = False
 
 
-def _manhattan_circle(origin: tuple[int, int, int], distance: int) -> Iterator[tuple[int, int, int]]:
-    xorigin, yorigin, zorigin = origin
-    for dx in range(- distance, distance + 1):
-        yrange = distance - abs(dx)
-        for dy in range(- yrange, yrange + 1):
-            zrange = distance - abs(dx) - abs(dy)
-            for dz in range(- zrange, zrange + 1):
-                yield (xorigin + dx, yorigin + dy, zorigin + dz)
-
-
 def _get_intersected_spaces(origin: tuple[int, int, int],
                             destination: tuple[int, int, int]) -> Iterable[tuple[int, int, int]]:
     xorigin, yorigin, zorigin = (origin[0] + 0.5, origin[1] + 0.5, origin[2] + 0.5)
@@ -146,5 +141,5 @@ def _get_intersected_spaces(origin: tuple[int, int, int],
         x = lerp(xorigin, xdest, i / 50)
         y = lerp(yorigin, ydest, i / 50)
         z = lerp(zorigin, zdest, i / 50)
-        result.add((int(x), int(y), int(z)))
+        result.add((int(math.floor(x)), int(math.floor(y)), int(math.floor(z))))
     return result
