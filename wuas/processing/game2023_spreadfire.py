@@ -17,6 +17,8 @@ import random
 
 MCOTW = (-100, -101, -102)
 
+INTRINSICALLY_FIREPROOF = ('start', 'altar', 'water', 'twater')
+
 
 @registered_processor(aliases=["fire2023"])
 class FireSpreadProcessor(BoardProcessor):
@@ -64,7 +66,7 @@ def _is_super_fire_space(board: Board, fire_space: tuple[int, int, int]) -> bool
 def _is_fireproof(space: Space) -> bool:
     if Attribute("fireproof") in space.get_attributes():
         return True
-    if space.space_name in ('altar', 'start'):
+    if space.space_name in INTRINSICALLY_FIREPROOF:
         return True
     if 'goldcoin' in [token.token_name for token in space.get_tokens()]:
         return True

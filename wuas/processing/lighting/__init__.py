@@ -89,6 +89,7 @@ class LightingEngine:
             if self._lighting_grid[x, y, z] <= 0:
                 space.space_name = self._lighting_config.darkness
                 space.token_ids = []
+                space.attribute_ids = []
 
 
 class LightingGrid:
