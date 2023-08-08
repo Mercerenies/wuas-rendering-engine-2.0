@@ -17,7 +17,7 @@ import random
 
 MCOTW = (-100, -101, -102)
 
-INTRINSICALLY_FIREPROOF = ('start', 'altar', 'water', 'twater')
+INTRINSICALLY_FIREPROOF = ('start', 'altar', 'water', 'twater', 'ttree')
 
 
 @registered_processor(aliases=["fire2023"])

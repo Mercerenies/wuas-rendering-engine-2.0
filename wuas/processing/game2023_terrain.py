@@ -47,18 +47,19 @@ def _evaluate_terrain(current_space: str, adjacent_spaces: list[str]) -> str:
     match current_space:
         case "ash":
             # Ash spaces will absorb nearby grass, tree, and water spaces.
-            candidates = {"grass", "tree", "water"} & set(adjacent_spaces)
+            candidates = {"grass", "tree", "water", "tgrass", "ttree", "twater"} & set(adjacent_spaces)
             if candidates:
                 return random.choice(list(candidates))
             else:
                 return "ash"
         case "dirt":
-            if 'water' in adjacent_spaces or adjacent_spaces.count('grass') in [2, 3]:
+            grass_tiles = adjacent_spaces.count('grass') + adjacent_spaces.count('tgrass')
+            if 'water' in adjacent_spaces or grass_tiles in [2, 3]:
                 return 'grass'
             else:
                 return 'dirt'
         case "grass":
-            grass_tiles = adjacent_spaces.count('grass')
+            grass_tiles = adjacent_spaces.count('grass') + adjacent_spaces.count('tgrass')
             if grass_tiles < 2:
                 return 'dirt'
             elif grass_tiles > 3:
@@ -66,10 +67,27 @@ def _evaluate_terrain(current_space: str, adjacent_spaces: list[str]) -> str:
             else:
                 return 'grass'
         case "tree":
-            if adjacent_spaces.count('grass') <= 1:
+            grass_tiles = adjacent_spaces.count('grass') + adjacent_spaces.count('tgrass')
+            if 'ttree' in adjacent_spaces:
+                return 'ttree'
+            elif grass_tiles <= 1:
                 return 'grass'
             else:
                 return 'tree'
+        case "tdirt":
+            grass_tiles = adjacent_spaces.count('grass') + adjacent_spaces.count('tgrass')
+            if 'water' in adjacent_spaces or grass_tiles in [2, 3]:
+                return 'tgrass'
+            else:
+                return 'tdirt'
+        case "tgrass":
+            grass_tiles = adjacent_spaces.count('grass') + adjacent_spaces.count('tgrass')
+            if grass_tiles < 2:
+                return 'tdirt'
+            elif grass_tiles > 3:
+                return 'ttree'
+            else:
+                return 'tgrass'
         case _:
             # No expansion
             return current_space
