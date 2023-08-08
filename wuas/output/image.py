@@ -1,7 +1,7 @@
 
 """Output format which renders to a PNG image."""
 
-from wuas.board import Board, Floor
+from wuas.board import Board, Floor, Space
 from wuas.config import ConfigFile
 from wuas.constants import SPACE_WIDTH, SPACE_HEIGHT
 from wuas.output.abc import OutputProducer
@@ -9,6 +9,7 @@ from wuas.output.abc import OutputProducer
 from PIL import Image, ImageDraw
 
 from enum import IntEnum
+from typing import Set, Iterable
 
 
 class Layer(IntEnum):
@@ -58,6 +59,14 @@ class Renderer:
         if layer is Layer.TOKEN:
             self._render_tokens()
 
+    def get_attribute_colors(self, space: Space) -> Set[str]:
+        result = set()
+        for attribute in space.get_attributes():
+            attribute_data = self.config.definitions.get_attribute(attribute.name)
+            if attribute_data.outlinecolor is not None:
+                result.add(attribute_data.outlinecolor)
+        return result
+
     def _render_spaces(self, layer: Layer) -> None:
         for x, y in self.floor.indices:
             space = self.floor.get_space(x, y)
@@ -66,10 +75,7 @@ class Renderer:
                 space_image = self.config.spaces_png.select(space_data.coords)
                 self.image.paste(space_image, (x * SPACE_WIDTH, y * SPACE_HEIGHT), space_image)
                 # Attributes for this space
-                for attribute in space.get_attributes():
-                    attribute_data = self.config.definitions.get_attribute(attribute.name)
-                    if attribute_data.outlinecolor is not None:
-                        self._highlight_space(x, y, attribute_data.outlinecolor)
+                self._highlight_space(x, y, self.get_attribute_colors(space))
 
     def _render_tokens(self) -> None:
         for x, y in self.floor.indices:
@@ -82,17 +88,22 @@ class Renderer:
                 dx, dy = token.position
                 self.image.paste(token_image, (topleft_x + dx, topleft_y + dy), token_image)
 
-    def _highlight_space(self, x: int, y: int, outline_color: str) -> None:
+    def _highlight_space(self, x: int, y: int, outline_colors: Iterable[str]) -> None:
         draw = ImageDraw.Draw(self.image)
         x0 = x * SPACE_WIDTH + 2
         y0 = y * SPACE_HEIGHT + 2
         x1 = x0 + SPACE_WIDTH - 4
         y1 = y0 + SPACE_HEIGHT - 4
-        draw.line(
-            [(x0, y0), (x0, y1), (x1, y1), (x1, y0), (x0, y0)],
-            fill=outline_color,
-            width=3,
-        )
+        for outline_color in outline_colors:
+            draw.line(
+                [(x0, y0), (x0, y1), (x1, y1), (x1, y0), (x0, y0)],
+                fill=outline_color,
+                width=3,
+            )
+            x0 += 1
+            x1 -= 1
+            y0 += 1
+            y1 -= 1
 
     def build(self) -> Image.Image:
         """Return the image being constructed. This renderer should be
