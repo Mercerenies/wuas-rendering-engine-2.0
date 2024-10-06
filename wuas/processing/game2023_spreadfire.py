@@ -70,6 +70,8 @@ def _is_fireproof(space: Space) -> bool:
         return True
     if 'goldcoin' in [token.token_name for token in space.get_tokens()]:
         return True
+    if space.space_name == 'ash' and 'smolderingimmunity' not in space.attribute_ids:
+        return True
     return False
 
 

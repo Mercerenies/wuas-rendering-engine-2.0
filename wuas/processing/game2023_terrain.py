@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from wuas.processing.abc import BoardProcessor
-from wuas.board import Board, Floor
+from wuas.board import Board, Floor, Space
 from wuas.config import ConfigFile
 from wuas.processing.registry import registered_processor
 
@@ -24,7 +24,7 @@ class TerrainProcessor(BoardProcessor):
             for x, y in floor.indices:
                 space = floor.get_space(x, y)
                 adjacent = _get_adjacent_spaces(original_board.floors[z], x, y)
-                space.space_name = _evaluate_terrain(space.space_name, adjacent)
+                space.space_name = _evaluate_terrain(space, adjacent)
 
 
 def _get_adjacent_spaces(floor: Floor, x: int, y: int) -> list[str]:
@@ -43,13 +43,16 @@ def _get_adjacent_spaces(floor: Floor, x: int, y: int) -> list[str]:
     return result
 
 
-def _evaluate_terrain(current_space: str, adjacent_spaces: list[str]) -> str:
-    match current_space:
+def _evaluate_terrain(current_space: Space, adjacent_spaces: list[str]) -> str:
+    space_name = current_space.space_name
+    match space_name:
         case "ash":
             # Ash spaces will absorb nearby grass, tree, and water spaces.
             candidates = {"grass", "tree", "water", "tgrass", "ttree", "twater"} & set(adjacent_spaces)
             if candidates:
                 return random.choice(list(candidates))
+            elif random.random() < 0.33 and 'smolderingimmunity' not in current_space.attribute_ids:
+                return "dirt"
             else:
                 return "ash"
         case "dirt":
@@ -90,4 +93,4 @@ def _evaluate_terrain(current_space: str, adjacent_spaces: list[str]) -> str:
                 return 'tgrass'
         case _:
             # No expansion
-            return current_space
+            return space_name

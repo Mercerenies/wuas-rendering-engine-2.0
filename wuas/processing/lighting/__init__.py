@@ -6,7 +6,7 @@ game.
 
 from __future__ import annotations
 
-from wuas.processing.lighting.config import LightingConfig, ConfigLightSourceSupplier
+from wuas.processing.lighting.config import LightingConfig, Game2023LightSourceSupplier
 from wuas.processing.lighting.source import LightSourceSupplier
 from wuas.processing.abc import BoardProcessor
 from wuas.processing.registry import registered_processor
@@ -43,7 +43,7 @@ class LightingEngine:
         self._lighting_grid = LightingGrid(board.width, board.height, board.floors)
         self._lighting_config = LightingConfig.from_json(config.meta['lighting'])
         # TODO Allow this to be constructed abstractly (as a ctor arg)
-        self._light_sources = ConfigLightSourceSupplier(self._lighting_config, board)
+        self._light_sources = Game2023LightSourceSupplier(self._lighting_config, board)
 
     def compute_all_lights(self) -> None:
         self._lighting_grid.is_dirty = True

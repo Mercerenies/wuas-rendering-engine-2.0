@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from wuas.processing.lighting.source import LightSourceSupplier
-from wuas.board import Board, Token
+from wuas.board import Board, Token, Space
 
 from dataclasses import dataclass
 from typing import Any
@@ -56,12 +56,25 @@ class ConfigLightSourceSupplier(LightSourceSupplier):
     def get_light_source(self, position: tuple[int, int, int]) -> int:
         x, y, z = position
         space = self._board.get_space(x, y, z)
-        lights = [self._token_light(token) for token in space.get_tokens()]
-        lights.append(self._config.spaces.get(space.space_name, DEFAULT_SPACE_LIGHT))
+        lights = [self.token_light(token) for token in space.get_tokens()]
+        lights.append(self.space_light(space))
         return max(lights)
 
-    def _token_light(self, token: Token) -> int:
+    def space_light(self, space: Space) -> int:
+        return self._config.spaces.get(space.space_name, DEFAULT_SPACE_LIGHT)
+
+    def token_light(self, token: Token) -> int:
         if token.item_name is not None:
             return self._config.items.get(token.item_name, DEFAULT_ITEM_LIGHT)
         else:
             return self._config.tokens.get(token.token_name, DEFAULT_TOKEN_LIGHT)
+
+
+class Game2023LightSourceSupplier(ConfigLightSourceSupplier):
+    """Light source supplier from a config file, with special rules
+    for the 2023 Game."""
+
+    def space_light(self, space: Space) -> int:
+        if space.space_name == 'fire' and 'fireimmunity' in space.attribute_ids:
+            return 0
+        return super().space_light(space)
