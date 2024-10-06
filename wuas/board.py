@@ -4,6 +4,8 @@ WUAS board."""
 
 from __future__ import annotations
 
+from wuas.config import normalize_space_name
+
 from dataclasses import dataclass
 from typing import Mapping, Sequence, Iterator
 
@@ -260,7 +262,7 @@ class Space:
     @property
     def space_name(self) -> str:
         """The name of the space's type."""
-        return self._tile_data.space_name
+        return normalize_space_name(self._tile_data.space_name)
 
     @space_name.setter
     def space_name(self, value: str) -> None:
