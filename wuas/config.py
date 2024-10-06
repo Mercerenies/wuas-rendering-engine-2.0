@@ -115,7 +115,7 @@ class DefinitionsFile:
 
     def get_space(self, key: str) -> SpaceDefinition:
         """Returns the space with the given name, after normalizing with
-        normalize_space_name. Raises KeyError ifit doesn't exist."""
+        normalize_space_name. Raises KeyError if it doesn't exist."""
         key = normalize_space_name(key)
         return SpaceDefinition.from_json_data(self._json_data['spaces'][key])
 

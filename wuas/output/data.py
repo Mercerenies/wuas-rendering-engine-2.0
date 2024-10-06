@@ -98,7 +98,7 @@ def _print_token_references(board: Board, output_file: TextIO) -> None:
 
 def _print_attribute_references(board: Board, output_file: TextIO) -> None:
     for key, value in board.attributes.items():
-        output_file.write(f"{key} {value.name}")
+        output_file.write(f"{key} {value.name}\n")
 
 
 class DatafileProducer(OutputProducer):
