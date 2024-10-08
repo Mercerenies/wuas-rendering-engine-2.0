@@ -7,7 +7,7 @@ from __future__ import annotations
 from PIL import Image
 
 import json
-from typing import Any
+from typing import Any, Literal
 from dataclasses import dataclass
 from functools import cached_property
 
@@ -177,6 +177,7 @@ class AttributeDefinition:
 
     name: str
     outlinecolor: str | None
+    outlineside: Literal['all', 'bottom']
     desc: str
 
     @classmethod
@@ -184,6 +185,7 @@ class AttributeDefinition:
         return cls(
             name=json_data['name'],
             outlinecolor=json_data['outlinecolor'],
+            outlineside=json_data.get('outlineside', 'all'),
             desc=json_data['desc'],
         )
 

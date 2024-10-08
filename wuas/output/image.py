@@ -9,7 +9,7 @@ from wuas.output.abc import OutputProducer
 from PIL import Image, ImageDraw
 
 from enum import IntEnum
-from typing import Set, Iterable
+from typing import Set, Iterable, NamedTuple, Literal
 
 
 class Layer(IntEnum):
@@ -32,6 +32,11 @@ class Layer(IntEnum):
     GAP = 0
     REGULAR = 1
     TOKEN = 999
+
+
+class AttributeColor(NamedTuple):
+    color: str
+    side: Literal['all', 'bottom']
 
 
 class Renderer:
@@ -59,12 +64,12 @@ class Renderer:
         if layer is Layer.TOKEN:
             self._render_tokens()
 
-    def get_attribute_colors(self, space: Space) -> Set[str]:
+    def get_attribute_colors(self, space: Space) -> Set[AttributeColor]:
         result = set()
         for attribute in space.get_attributes():
             attribute_data = self.config.definitions.get_attribute(attribute.name)
             if attribute_data.outlinecolor is not None:
-                result.add(attribute_data.outlinecolor)
+                result.add(AttributeColor(color=attribute_data.outlinecolor, side=attribute_data.outlineside))
         return result
 
     def _render_spaces(self, layer: Layer) -> None:
@@ -88,18 +93,25 @@ class Renderer:
                 dx, dy = token.position
                 self.image.paste(token_image, (topleft_x + dx, topleft_y + dy), token_image)
 
-    def _highlight_space(self, x: int, y: int, outline_colors: Iterable[str]) -> None:
+    def _highlight_space(self, x: int, y: int, outline_colors: Iterable[AttributeColor]) -> None:
         draw = ImageDraw.Draw(self.image)
         x0 = x * SPACE_WIDTH + 2
         y0 = y * SPACE_HEIGHT + 2
         x1 = x0 + SPACE_WIDTH - 4
         y1 = y0 + SPACE_HEIGHT - 4
-        for outline_color in outline_colors:
-            draw.line(
-                [(x0, y0), (x0, y1), (x1, y1), (x1, y0), (x0, y0)],
-                fill=outline_color,
-                width=3,
-            )
+        for outline_color, outline_side in outline_colors:
+            if outline_side == 'all':
+                draw.line(
+                    [(x0, y0), (x0, y1), (x1, y1), (x1, y0), (x0, y0)],
+                    fill=outline_color,
+                    width=3,
+                )
+            elif outline_side == 'bottom':
+                draw.line(
+                    [(x0, y1), (x1, y1)],
+                    fill=outline_color,
+                    width=3,
+                )
             x0 += 1
             x1 -= 1
             y0 += 1
