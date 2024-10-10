@@ -9,6 +9,7 @@ from wuas.graph import GraphEdge
 
 from dataclasses import dataclass
 from typing import Mapping, Sequence, Iterator
+from functools import cached_property
 
 
 class Board:
@@ -25,7 +26,7 @@ class Board:
     # key-value pairs.
     _meta: dict[str, str]
     # Graph data, for highway-like interactions.
-    _graph: list[GraphEdge]
+    _graph_edges: list[GraphEdge]
 
     # TODO I don't like the complex type of floor_map
     def __init__(self,
@@ -33,7 +34,7 @@ class Board:
                  references: dict[str, Token],
                  attributes: dict[str, Attribute],
                  meta: dict[str, str],
-                 graph: list[GraphEdge]) -> None:
+                 graph_edges: list[GraphEdge]) -> None:
         """Construct a board consisting of the given floors. All floors
         must have the same dimensions. This invariant is checked at
         construction time."""
@@ -41,7 +42,7 @@ class Board:
         self._references = references
         self._attributes = attributes
         self._meta = meta
-        self._graph = graph
+        self._graph_edges = graph_edges
         # Check that all floors have the same width and height
         if self._floors:
             first_floor = Floor(next(iter(self._floors.values())), references, attributes)
@@ -133,7 +134,17 @@ class Board:
     @property
     def graph_edges(self) -> Sequence[GraphEdge]:
         """The graph edges present on the board."""
-        return self._graph
+        return self._graph_edges
+
+    @cached_property
+    def labels_map(self) -> Mapping[str, tuple[int, int, int]]:
+        """A mapping from space labels to their 0-based coordinates."""
+        result = {}
+        for x, y, z in self.indices:
+            space = self.get_space(x, y, z)
+            if space.space_label:
+                result[space.space_label] = (x, y, z)
+        return result
 
 
 class Floor:

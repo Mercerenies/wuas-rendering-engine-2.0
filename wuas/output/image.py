@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from wuas.util import draw_dotted_line
 from wuas.board import Board, Floor, Space
 from wuas.constants import SPACE_WIDTH, SPACE_HEIGHT, Layer
 from wuas.config import ConfigFile
@@ -26,12 +27,16 @@ class Renderer:
     fine-grained control over layering."""
 
     config: ConfigFile
+    board: Board
+    floor_number: int
     floor: Floor
     image: Image.Image
 
-    def __init__(self, config: ConfigFile, floor: Floor) -> None:
+    def __init__(self, config: ConfigFile, board: Board, floor_number: int, floor: Floor) -> None:
         self.config = config
+        self.floor_number = floor_number
         self.floor = floor
+        self.board = board
         image_width = SPACE_WIDTH * floor.width
         image_height = SPACE_HEIGHT * floor.height
         self.image = Image.new("RGBA", (image_width, image_height))
@@ -40,6 +45,8 @@ class Renderer:
         """Render the spaces associated with the given layer. If the
         layer is Layer.TOKEN, also render the tokens on the board."""
         self._render_spaces(layer)
+        if layer is Layer.HIGHWAY:
+            self._render_highway()
         if layer is Layer.TOKEN:
             self._render_tokens()
 
@@ -72,6 +79,21 @@ class Renderer:
                 dx, dy = token.position
                 self.image.paste(token_image, (topleft_x + dx, topleft_y + dy), token_image)
 
+    def _render_highway(self) -> None:
+        draw = ImageDraw.Draw(self.image)
+        for edge in self.board.graph_edges:
+            src_x, src_y, src_z = self.board.labels_map[edge.from_node]
+            dest_x, dest_y, _ = self.board.labels_map[edge.to_node]
+            if src_z != self.floor_number:  # TODO: Validator should verify that src_z == dest_z
+                return
+            draw_dotted_line(
+                draw,
+                ((src_x + 0.5) * SPACE_WIDTH, (src_y + 0.5) * SPACE_HEIGHT),
+                ((dest_x + 0.5) * SPACE_WIDTH, (dest_y + 0.5) * SPACE_HEIGHT),
+                fill='black',
+                width=2,
+            )
+
     def _highlight_space(self, x: int, y: int, outline_colors: Iterable[AttributeColor]) -> None:
         draw = ImageDraw.Draw(self.image)
         x0 = x * SPACE_WIDTH + 2
@@ -102,10 +124,10 @@ class Renderer:
         return self.image
 
 
-def render_image(config: ConfigFile, floor: Floor) -> Image.Image:
+def render_image(config: ConfigFile, board: Board, floor_number: int, floor: Floor) -> Image.Image:
     """Render the floor to an image file by drawing the layers in
     order."""
-    renderer = Renderer(config, floor)
+    renderer = Renderer(config, board, floor_number, floor)
     for layer in Layer:
         renderer.render_layer(layer)
     return renderer.build()
@@ -131,7 +153,7 @@ class DisplayedImageProducer(OutputProducer):
         self._floor_number = floor_number
 
     def produce_output(self, config: ConfigFile, board: Board) -> None:
-        image = render_image(config, board.floors[self._floor_number])
+        image = render_image(config, board, self._floor_number, board.floors[self._floor_number])
         image.show()
 
 
@@ -145,5 +167,5 @@ class SavedImageProducer(OutputProducer):
         self._floor_number = floor_number
 
     def produce_output(self, config: ConfigFile, board: Board) -> None:
-        image = render_image(config, board.floors[self._floor_number])
+        image = render_image(config, board, self._floor_number, board.floors[self._floor_number])
         image.save(self.output_filename)
