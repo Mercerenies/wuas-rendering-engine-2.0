@@ -1,37 +1,16 @@
 
 """Output format which renders to a PNG image."""
 
+from __future__ import annotations
+
 from wuas.board import Board, Floor, Space
+from wuas.constants import SPACE_WIDTH, SPACE_HEIGHT, Layer
 from wuas.config import ConfigFile
-from wuas.constants import SPACE_WIDTH, SPACE_HEIGHT
 from wuas.output.abc import OutputProducer
 
 from PIL import Image, ImageDraw
 
-from enum import IntEnum
 from typing import Set, Iterable, NamedTuple, Literal
-
-
-class Layer(IntEnum):
-    """Drawing spaces is done via layers, to make sure everything looks
-    reasonable in the resulting image. Every space type has a layer
-    intrinsic to it, which can be queried via get_layer. Spaces with a
-    lower layer will draw first, allowing those with a higher layer to
-    draw on top of them. The defined layers, in ascending order, are
-
-    * VOID - The minimum layer. By definition, nothing is on this layer,
-      and it appears behind everything else.
-    * GAP - The layer of gaps, i.e. empty white impassible spaces.
-    * REGULAR - The layer of all spaces that do not have special
-      drawing rules.
-    * TOKEN - No spaces draw on this layer. This is the layer of
-      token objects, such as players and items, which draw on top
-      of the space layer."""
-
-    VOID = -999
-    GAP = 0
-    REGULAR = 1
-    TOKEN = 999
 
 
 class AttributeColor(NamedTuple):
@@ -75,7 +54,7 @@ class Renderer:
     def _render_spaces(self, layer: Layer) -> None:
         for x, y in self.floor.indices:
             space = self.floor.get_space(x, y)
-            if get_layer(space.space_name) is layer:
+            if get_layer(space.space_name, self.config) is layer:
                 space_data = self.config.definitions.get_space(space.space_name)
                 space_image = self.config.spaces_png.select(space_data.coords)
                 self.image.paste(space_image, (x * SPACE_WIDTH, y * SPACE_HEIGHT), space_image)
@@ -132,10 +111,13 @@ def render_image(config: ConfigFile, floor: Floor) -> Image.Image:
     return renderer.build()
 
 
-def get_layer(space_name: str) -> Layer:
+def get_layer(space_name: str, config: ConfigFile) -> Layer:
     """Which layer the spaces are drawn on. Gaps are always drawn
     before other spaces, so they sit on a layer below others."""
-    if space_name == 'gap':
+    custom_layer = config.definitions.get_space(space_name).custom_layer
+    if custom_layer is not None:
+        return Layer(custom_layer)
+    elif space_name == 'gap':
         return Layer.GAP
     else:
         return Layer.REGULAR

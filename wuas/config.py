@@ -4,6 +4,8 @@ JSON files it references."""
 
 from __future__ import annotations
 
+from wuas.constants import Layer
+
 from PIL import Image
 
 import json
@@ -143,15 +145,21 @@ class SpaceDefinition:
     coords: tuple[int, int, int, int]
     visual: str
     desc: str
+    custom_layer: Layer | None
 
     @classmethod
     def from_json_data(cls, json_data: Any) -> SpaceDefinition:
         x1, y1, x2, y2 = [int(coord) for coord in json_data['coords'].split(',')]
+        try:
+            layer = Layer[json_data['custom_layer']] if 'custom_layer' in json_data else None
+        except IndexError as exc:
+            raise ValueError("Invalid layer") from exc
         return cls(
             name=json_data['name'],
             coords=(x1, y1, x2, y2),
             visual=json_data['visual'],
             desc=json_data['desc'],
+            custom_layer=layer,
         )
 
 
