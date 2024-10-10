@@ -9,7 +9,9 @@ from typing import TextIO, NamedTuple
 import re
 
 
-KNOWN_VERSIONS = (1, 2, 3)
+KNOWN_VERSIONS = (1, 2, 3, 4)
+
+SPACE_LABEL_MARKER = '&'
 
 
 def load_from_file(filename: str) -> Board:
@@ -30,12 +32,12 @@ def load_from_io(io: TextIO) -> Board:
     if version == 1:
         # Version 1 parses no metadata
         meta = {}
-    elif version in (2, 3):
-        # Versions 2 and 3 parse key-value pairs until it hits a newline
+    elif version in (2, 3, 4):
+        # Versions 2, 3, and 4 parse key-value pairs until it hits a newline
         meta = _read_meta(io)
 
     floors = _read_floors(io, version)
-    token_data = _read_tokens(io)
+    token_data = _read_tokens(io, version)
     if version >= 3:
         attr_data = _read_attrs(io)
     else:
@@ -81,22 +83,40 @@ def _read_board(io: TextIO, version: int) -> list[list[TileData]]:
         row = []
         for i in range(len(space_data)):
             space = space_data[i]
-            token = token_data[i]
+            token = list(token_data[i])
             space_name, attrs = _parse_space(space, version)
-            row.append(TileData(space_name, list(token), attrs))
+            tile_data = TileData(space_name, token, attrs)
+            if version >= 4:
+                # Version >= 4 parses space labels. Lower versions
+                # never have them.
+                _read_space_label(token, tile_data)
+            row.append(tile_data)
         result.append(row)
     return result
+
+
+def _read_space_label(token_list: list[str], tile_data: TileData) -> None:
+    try:
+        index = token_list.index(SPACE_LABEL_MARKER)
+    except ValueError:
+        # No label, so don't do anything
+        return
+    label = token_list[index + 1]
+    token_list[index:index + 2] = []
+    tile_data.space_label = label
 
 
 def _split_at_bars(text: str) -> list[str]:
     return text.split('|')[1:-1]
 
 
-def _read_tokens(io: TextIO) -> dict[str, Token]:
+def _read_tokens(io: TextIO, version: int) -> dict[str, Token]:
     result = {}
     line = io.readline()
     while line != '' and line != '\n':
         abbreviation, name, item_name, x, y = line.split()
+        if abbreviation == SPACE_LABEL_MARKER and version >= 4:
+            raise ValueError("'&' is an invalid token abbreviation")
         result[abbreviation] = Token(
             token_name=name,
             item_name=None if item_name == 'nil' else item_name,

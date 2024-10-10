@@ -17,6 +17,7 @@ def validate(config: ConfigFile, board: Board) -> None:
     configuration file. On validation failure, a ValidationError is
     raised. On success, this function returns None."""
     definitions = config.definitions
+    unique_space_labels = set()
     for x, y, z in board.indices:
         try:
             space = board.get_space(x, y, z)
@@ -36,3 +37,8 @@ def validate(config: ConfigFile, board: Board) -> None:
         for attr_data in attrs:
             if not definitions.has_attribute(attr_data.name):
                 raise ValidationError(f"No such attribute {attr_data.name}")
+        # Verify that the space label, if present, is unique.
+        if space.space_label is not None:
+            if space.space_label in unique_space_labels:
+                raise ValidationError(f"Duplicate space label {space.space_label}")
+            unique_space_labels.add(space.space_label)

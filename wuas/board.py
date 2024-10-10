@@ -279,6 +279,7 @@ class TileData:
     space_name: str
     token_ids: list[str]
     attribute_ids: list[str]
+    space_label: str | None = None
 
 
 class Space:
@@ -305,6 +306,16 @@ class Space:
     @space_name.setter
     def space_name(self, value: str) -> None:
         self._tile_data.space_name = value
+
+    @property
+    def space_label(self) -> str | None:
+        """A unique label identifying the space on the board. If
+        present, this label must be globally unique."""
+        return self._tile_data.space_label
+
+    @space_label.setter
+    def space_label(self, value: str | None) -> None:
+        self._tile_data.space_label = value
 
     @property
     def token_ids(self) -> Sequence[str]:

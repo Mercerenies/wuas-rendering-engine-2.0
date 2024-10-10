@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from wuas.board import Board, Floor
 from wuas.config import ConfigFile
+from wuas.loader import SPACE_LABEL_MARKER
 from wuas.output.abc import OutputProducer
 
 import sys
@@ -23,7 +24,7 @@ COMMENT_LINES = (
 
 SPACE_TEXT_WIDTH = 10
 HEADER_SLOT = '+' + '-' * SPACE_TEXT_WIDTH
-CURRENT_VERSION_NUMBER = 3
+CURRENT_VERSION_NUMBER = 4
 
 
 def render_to_data_file(board: Board, output_file: TextIO) -> None:
@@ -76,7 +77,10 @@ def _print_board_contents(floor: Floor, output_file: TextIO) -> None:
         output_file.write('|')
         for x in range(width):
             space = floor.get_space(x, y)
-            output_file.write(' {:<{}}|'.format(''.join(space.token_ids), SPACE_TEXT_WIDTH - 1))
+            token_layer_text = ''.join(space.token_ids)
+            if space.space_label is not None:
+                token_layer_text += SPACE_LABEL_MARKER + space.space_label
+            output_file.write(' {:<{}}|'.format(token_layer_text, SPACE_TEXT_WIDTH - 1))
         output_file.write('\n')
     output_file.write(separator_row + '\n\n')
 
