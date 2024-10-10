@@ -99,7 +99,7 @@ class Board:
         amount. The four integer arguments must be nonnegative.
         initial_value specifies the space type to put in the new
         positions. Each new position created in this way will initially
-        have no tokens oritems on it."""
+        have no tokens or items on it."""
         for floor in self.floors.values():
             floor.resize_unsafe(new_left, new_top, new_right, new_bottom, initial_value)
 
@@ -206,6 +206,44 @@ class Floor:
         for y in range(0, self.height):
             for x in range(0, self.width):
                 yield (x, y)
+
+    @property
+    def tiles(self) -> TileMapping:
+        """The mapping from (x, y) coordinates to TileData objects."""
+        return TileMapping(self, self._data)
+
+
+class TileMapping:
+    _floor: Floor
+    _tiles: list[list[TileData]]
+
+    def __init__(self, floor: Floor, tiles: list[list[TileData]]) -> None:
+        self._floor = floor
+        self._tiles = tiles
+
+    def __getitem__(self, tup: tuple[int, int]) -> TileData:
+        x, y = tup
+        try:
+            return self._tiles[y][x]
+        except IndexError:
+            raise IndexError(
+                f"Position {(x, y)} out of bounds in board of size {(self._floor.width, self._floor.height)}"
+            ) from None
+
+    def __setitem__(self, tup: tuple[int, int], value: TileData) -> None:
+        x, y = tup
+        try:
+            self._tiles[y][x] = value
+        except IndexError:
+            raise IndexError(
+                f"Position {(x, y)} out of bounds in board of size {(self._floor.width, self._floor.height)}"
+            ) from None
+
+    def __iter__(self) -> Iterator[tuple[int, int]]:
+        return self._floor.indices
+
+    def __len__(self) -> int:
+        return self._floor.height * self._floor.width
 
 
 class _FloorMapping(Mapping[int, Floor]):

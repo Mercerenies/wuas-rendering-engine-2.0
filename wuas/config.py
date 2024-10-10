@@ -209,6 +209,9 @@ class TokenDefinition:
             desc=json_data['desc'],
         )
 
+    def is_player(self) -> bool:
+        return self.stats == 'Player'
+
 
 class SpacesPng:
     image: Image.Image
