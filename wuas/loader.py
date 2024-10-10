@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from wuas.board import Board, TileData, Token, Attribute
+from wuas.graph import GraphEdge
 
 from typing import TextIO, NamedTuple
 import re
@@ -38,12 +39,18 @@ def load_from_io(io: TextIO) -> Board:
 
     floors = _read_floors(io, version)
     token_data = _read_tokens(io, version)
+
     if version >= 3:
         attr_data = _read_attrs(io)
     else:
         attr_data = {}
 
-    return Board(floors, token_data, attr_data, meta)
+    if version >= 4:
+        graph_data = _read_graph(io)
+    else:
+        graph_data = []
+
+    return Board(floors, token_data, attr_data, meta, graph_data)
 
 
 def _read_floors(io: TextIO, version: int) -> dict[int, list[list[TileData]]]:
@@ -143,6 +150,15 @@ def _read_meta(io: TextIO) -> dict[str, str]:
         line = line.strip()
         key, value = re.split(r":\s*", line)
         result[key] = value
+        line = io.readline()
+    return result
+
+
+def _read_graph(io: TextIO) -> list[GraphEdge]:
+    result = []
+    line = io.readline()
+    while line != '' and line != '\n':
+        result.append(GraphEdge.parse_from_line(line.strip()))
         line = io.readline()
     return result
 

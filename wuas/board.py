@@ -5,6 +5,7 @@ WUAS board."""
 from __future__ import annotations
 
 from wuas.config import normalize_space_name
+from wuas.graph import GraphEdge
 
 from dataclasses import dataclass
 from typing import Mapping, Sequence, Iterator
@@ -23,13 +24,16 @@ class Board:
     # Meta data, included after the version number as a set of
     # key-value pairs.
     _meta: dict[str, str]
+    # Graph data, for highway-like interactions.
+    _graph: list[GraphEdge]
 
     # TODO I don't like the complex type of floor_map
     def __init__(self,
                  floor_map: dict[int, list[list[TileData]]],
                  references: dict[str, Token],
                  attributes: dict[str, Attribute],
-                 meta: dict[str, str]) -> None:
+                 meta: dict[str, str],
+                 graph: list[GraphEdge]) -> None:
         """Construct a board consisting of the given floors. All floors
         must have the same dimensions. This invariant is checked at
         construction time."""
@@ -37,6 +41,7 @@ class Board:
         self._references = references
         self._attributes = attributes
         self._meta = meta
+        self._graph = graph
         # Check that all floors have the same width and height
         if self._floors:
             first_floor = Floor(next(iter(self._floors.values())), references, attributes)
@@ -124,6 +129,11 @@ class Board:
     def meta(self) -> Mapping[str, str]:
         """The metadata mapping."""
         return self._meta
+
+    @property
+    def graph_edges(self) -> Sequence[GraphEdge]:
+        """The graph edges present on the board."""
+        return self._graph
 
 
 class Floor:

@@ -58,6 +58,10 @@ def render_to_data_file(board: Board, output_file: TextIO) -> None:
     _print_attribute_references(board, output_file)
     output_file.write('\n')
 
+    # Graph data
+    _print_graph_data(board, output_file)
+    output_file.write('\n')
+
 
 def _print_board_contents(floor: Floor, output_file: TextIO) -> None:
     width = floor.width
@@ -103,6 +107,11 @@ def _print_token_references(board: Board, output_file: TextIO) -> None:
 def _print_attribute_references(board: Board, output_file: TextIO) -> None:
     for key, value in board.attributes.items():
         output_file.write(f"{key} {value.name}\n")
+
+
+def _print_graph_data(board: Board, output_file: TextIO) -> None:
+    for edge in board.graph_edges:
+        output_file.write(edge.to_data_str() + "\n")
 
 
 class DatafileProducer(OutputProducer):
