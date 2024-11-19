@@ -27,7 +27,7 @@ def validate(config: ConfigFile, board: Board) -> None:
             raise ValidationError("Integrity error in the board .dat file") from exc
         # Verify that the space and any tokens/items on it actually
         # exist.
-        if not definitions.has_space(space.space_name):
+        if not definitions.has_any_space(space.space_name):
             raise ValidationError(f"No such space {space.space_name}")
         for token_data in tokens:
             if not definitions.has_token(token_data.token_name):

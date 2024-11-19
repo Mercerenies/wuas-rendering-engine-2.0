@@ -82,14 +82,31 @@ class DefinitionsFile:
         with open(filename, 'r') as json_file:
             return cls(json.load(json_file))
 
-    def has_space(self, key: str) -> bool:
+    def has_raw_space(self, key: str) -> bool:
         """Returns true if the space with the given name exists. This
         function performs space name normalization with normalize_space_name."""
         try:
-            self.get_space(key)
+            self.get_raw_space(key)
             return True
         except KeyError:
             return False
+
+    def has_composite_space(self, key: str) -> bool:
+        """Returns true if the composite space with the given name
+        exists. This function performs space name normalization with
+        normalize_space_name.
+
+        """
+        try:
+            self.get_composite_space(key)
+            return True
+        except KeyError:
+            return False
+
+    def has_any_space(self, key: str) -> bool:
+        """Returns true if a space OR composite space with the given
+        name exists."""
+        return self.has_raw_space(key) or self.has_composite_space(key)
 
     def has_item(self, key: str) -> bool:
         """Returns true if the item with the given name exists."""
@@ -115,11 +132,49 @@ class DefinitionsFile:
         except KeyError:
             return False
 
-    def get_space(self, key: str) -> SpaceDefinition:
+    def get_raw_space(self, key: str) -> SpaceDefinition:
         """Returns the space with the given name, after normalizing with
         normalize_space_name. Raises KeyError if it doesn't exist."""
         key = normalize_space_name(key)
         return SpaceDefinition.from_json_data(self._json_data['spaces'][key])
+
+    def get_composite_space(self, key: str) -> CompositeSpaceDefinition:
+        """Returns the composite space with the given name, after
+        normalizing with normalize_space_name. Raises KeyError if it
+        doesn't exist.
+
+        """
+        key = normalize_space_name(key)
+        return CompositeSpaceDefinition.from_json_data(self._json_data.get('composite_spaces', {})[key])
+
+    def get_effect_space(self, key: str) -> SpaceDefinition:
+        try:
+            return self.get_raw_space(key)
+        except KeyError:
+            # It might be a Composite Space. Try looking that up.
+            composite_space = self.get_composite_space(key)
+            return self.get_raw_space(composite_space.effect)
+
+    def get_any_space(self, key: str) -> SpaceDefinition | CompositeSpaceDefinition:
+        """Returns the space or composite space with the given name,
+        after normalizing with normalize_space_name. Raises KeyError
+        if it doesn't exist.
+
+        """
+        try:
+            return self.get_raw_space(key)
+        except KeyError:
+            return self.get_composite_space(key)
+
+    def get_any_space_as_composite(self, key: str) -> CompositeSpaceDefinition:
+        """Returns the space or composite space with the given name.
+        In the former case, the space is wrapped in a trivial
+        CompositeSpaceDefinition."""
+        space = self.get_any_space(key)
+        if isinstance(space, SpaceDefinition):
+            return CompositeSpaceDefinition.trivial_composite(key)
+        else:
+            return space
 
     def get_item(self, key: str) -> ItemDefinition:
         """Returns the item with the given name, raising KeyError if it doesn't
@@ -160,6 +215,29 @@ class SpaceDefinition:
             visual=json_data['visual'],
             desc=json_data['desc'],
             custom_layer=layer,
+        )
+
+
+@dataclass(frozen=True)
+class CompositeSpaceDefinition:
+    """The definition of a composite space, according to a
+    DefinitionsFile."""
+
+    effect: str
+    layers: list[str]
+
+    @classmethod
+    def trivial_composite(cls, space_name: str) -> CompositeSpaceDefinition:
+        return cls(
+            effect=space_name,
+            layers=[space_name],
+        )
+
+    @classmethod
+    def from_json_data(cls, json_data: Any) -> CompositeSpaceDefinition:
+        return cls(
+            effect=json_data['effect'],
+            layers=json_data['layers'],
         )
 
 
@@ -251,10 +329,21 @@ TOKEN_HEIGHT = 16
 def get_layer(space_name: str, config: ConfigFile) -> Layer:
     """Which layer the spaces are drawn on. Gaps are always drawn
     before other spaces, so they sit on a layer below others."""
-    custom_layer = config.definitions.get_space(space_name).custom_layer
+    custom_layer = config.definitions.get_effect_space(space_name).custom_layer
     if custom_layer is not None:
         return Layer(custom_layer)
     elif space_name == 'gap':
         return Layer.GAP
     else:
         return Layer.REGULAR
+
+
+def find_matching_for_layer(
+        config: ConfigFile,
+        space: CompositeSpaceDefinition,
+        layer: Layer,
+) -> SpaceDefinition | None:
+    for layered_space_name in space.layers:
+        if get_layer(layered_space_name, config) is layer:
+            return config.definitions.get_raw_space(layered_space_name)
+    return None

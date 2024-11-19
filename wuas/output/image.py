@@ -6,7 +6,7 @@ from __future__ import annotations
 from wuas.util import draw_dotted_line
 from wuas.board import Board, Floor, Space
 from wuas.constants import SPACE_WIDTH, SPACE_HEIGHT, Layer
-from wuas.config import ConfigFile, get_layer
+from wuas.config import ConfigFile, find_matching_for_layer
 from wuas.output.abc import OutputProducer
 
 from PIL import Image, ImageDraw
@@ -61,8 +61,12 @@ class Renderer:
     def _render_spaces(self, layer: Layer) -> None:
         for x, y in self.floor.indices:
             space = self.floor.get_space(x, y)
-            if get_layer(space.space_name, self.config) is layer:
-                space_data = self.config.definitions.get_space(space.space_name)
+            space_data = find_matching_for_layer(
+                config=self.config,
+                space=self.config.definitions.get_any_space_as_composite(space.space_name),
+                layer=layer,
+            )
+            if space_data:
                 space_image = self.config.spaces_png.select(space_data.coords)
                 self.image.paste(space_image, (x * SPACE_WIDTH, y * SPACE_HEIGHT), space_image)
                 # Attributes for this space
