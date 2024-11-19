@@ -17,7 +17,8 @@ class Layer(IntEnum):
     * VOID - The minimum layer. By definition, nothing is on this
       layer, and it appears behind everything else.
 
-    * GAP - The layer of gaps, i.e. empty white impassible spaces.
+    * GAP - The layer of gaps (i.e. empty white impassible spaces) and
+      similar background-ish elements.
 
     * REGULAR - The layer of all spaces that do not have special
       drawing rules.

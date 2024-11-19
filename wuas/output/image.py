@@ -6,7 +6,7 @@ from __future__ import annotations
 from wuas.util import draw_dotted_line
 from wuas.board import Board, Floor, Space
 from wuas.constants import SPACE_WIDTH, SPACE_HEIGHT, Layer
-from wuas.config import ConfigFile
+from wuas.config import ConfigFile, get_layer
 from wuas.output.abc import OutputProducer
 
 from PIL import Image, ImageDraw
@@ -131,18 +131,6 @@ def render_image(config: ConfigFile, board: Board, floor_number: int, floor: Flo
     for layer in Layer:
         renderer.render_layer(layer)
     return renderer.build()
-
-
-def get_layer(space_name: str, config: ConfigFile) -> Layer:
-    """Which layer the spaces are drawn on. Gaps are always drawn
-    before other spaces, so they sit on a layer below others."""
-    custom_layer = config.definitions.get_space(space_name).custom_layer
-    if custom_layer is not None:
-        return Layer(custom_layer)
-    elif space_name == 'gap':
-        return Layer.GAP
-    else:
-        return Layer.REGULAR
 
 
 class DisplayedImageProducer(OutputProducer):

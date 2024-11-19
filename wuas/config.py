@@ -246,3 +246,15 @@ class TokensPng:
 
 TOKEN_WIDTH = 16
 TOKEN_HEIGHT = 16
+
+
+def get_layer(space_name: str, config: ConfigFile) -> Layer:
+    """Which layer the spaces are drawn on. Gaps are always drawn
+    before other spaces, so they sit on a layer below others."""
+    custom_layer = config.definitions.get_space(space_name).custom_layer
+    if custom_layer is not None:
+        return Layer(custom_layer)
+    elif space_name == 'gap':
+        return Layer.GAP
+    else:
+        return Layer.REGULAR
