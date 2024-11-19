@@ -20,6 +20,9 @@ class Layer(IntEnum):
     * GAP - The layer of gaps (i.e. empty white impassible spaces) and
       similar background-ish elements.
 
+    * GAP_OVERLAY - Layer for visual-only objects that appear in front
+      of gaps but below mechanical spaces.
+
     * REGULAR - The layer of all spaces that do not have special
       drawing rules.
 
@@ -36,7 +39,8 @@ class Layer(IntEnum):
 
     VOID = -999
     GAP = 0
-    REGULAR = 1
-    HIGHWAY = 2
-    HIGHWAY_SPACE = 3
+    GAP_OVERLAY = 1
+    REGULAR = 2
+    HIGHWAY = 3
+    HIGHWAY_SPACE = 4
     TOKEN = 999

@@ -8,6 +8,7 @@ from wuas.board import Board, Floor, Space
 from wuas.constants import SPACE_WIDTH, SPACE_HEIGHT, Layer
 from wuas.config import ConfigFile, find_matching_for_layer
 from wuas.output.abc import OutputProducer
+from .majora import MAJORAS_MOON_LAYER, render_moon
 
 from PIL import Image, ImageDraw
 
@@ -47,6 +48,8 @@ class Renderer:
         self._render_spaces(layer)
         if layer is Layer.HIGHWAY:
             self._render_highway()
+        if layer is MAJORAS_MOON_LAYER:
+            render_moon(self)
         if layer is Layer.TOKEN:
             self._render_tokens()
 
