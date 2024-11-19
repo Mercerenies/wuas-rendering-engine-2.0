@@ -90,7 +90,7 @@ class Renderer:
                 draw,
                 ((src_x + 0.5) * SPACE_WIDTH, (src_y + 0.5) * SPACE_HEIGHT),
                 ((dest_x + 0.5) * SPACE_WIDTH, (dest_y + 0.5) * SPACE_HEIGHT),
-                fill='black',
+                fill='red',
                 width=2,
             )
 

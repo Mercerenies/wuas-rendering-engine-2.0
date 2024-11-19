@@ -8,6 +8,8 @@ their original position (relative to the Altar). If that position
 turns out to be a gap in the new configuration, then (and only then)
 should that player warp to the new mirrored position.
 
+ It also assumes the board is a torus (therefore things wrap around).
+
 """
 
 from __future__ import annotations
@@ -18,6 +20,7 @@ from wuas.config import ConfigFile, normalize_space_name
 from wuas.processing.registry import registered_processor
 from wuas.processing.mirror import MirrorProcessor
 
+import sys
 from typing import Sequence, TypeVar, NamedTuple, Iterator
 
 
@@ -32,7 +35,7 @@ class MirrorWithPlayersProcessor(BoardProcessor):
         altar_x, _, _ = _find_altar(board)
         tokens = list(_find_players(config, board))
         for player_token in tokens:
-            _try_to_move_back(board, altar_x, player_token.pos, player_token.token_id)
+            _try_to_move_back(config, board, altar_x, player_token.pos, player_token.token_id)
 
 
 class PlayerToken(NamedTuple):
@@ -55,21 +58,28 @@ def _find_altar(board: Board) -> tuple[int, int, int]:
     raise ValueError('Could not find altar in board')
 
 
-def _try_to_move_back(board: Board, altar_x: int, pos: tuple[int, int, int], token_id: str) -> None:
+def _try_to_move_back(
+        config: ConfigFile,
+        board: Board,
+        altar_x: int,
+        pos: tuple[int, int, int],
+        token_id: str,
+) -> None:
     # We just mirrored everything, including player tokens. Try to
     # un-mirror this player token."""
+    token_name = board.tokens[token_id].token_name
     x, y, z = pos
     src_space = board.get_space(x, y, z)
-    dest_x = 2 * altar_x - x
-    try:
-        dest_space = board.get_space(dest_x, y, z)
-    except IndexError:
-        # Un-mirrored position is out of bounds; assume it's a gap.
-        return
-    if normalize_space_name(dest_space.space_name) != GAP_NAME:
+    dest_x = (2 * altar_x - x) % board.width
+    dest_space = board.get_space(dest_x, y, z)
+    space_name = normalize_space_name(dest_space.space_name)
+    if space_name != GAP_NAME and space_name not in config.meta.get('mirrorsolids', []):
         # Move the player back to the destination.
         src_space.token_ids = _without(src_space.token_ids, token_id)
         dest_space.token_ids = tuple(dest_space.token_ids) + (token_id,)
+        print(f"Mirror: Player {token_name} remained at the same X/Y coords", file=sys.stderr)
+    else:
+        print(f"Mirror: Player {token_name} moved with the board", file=sys.stderr)
 
 
 def _without(seq: Sequence[_T], value: _T) -> Sequence[_T]:
