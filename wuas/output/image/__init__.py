@@ -80,7 +80,7 @@ class Renderer:
             space = self.floor.get_space(x, y)
             topleft_x = x * SPACE_WIDTH
             topleft_y = y * SPACE_HEIGHT
-            for token in space.get_tokens():
+            for token in space.get_concrete_tokens():
                 token_data = self.config.definitions.get_token(token.token_name)
                 token_image = self.config.tokens_png.select(token_data.thumbnail)  # TODO Span
                 dx, dy = token.position

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from wuas.processing.lighting.source import LightSourceSupplier
-from wuas.board import Board, Token, Space
+from wuas.board import Board, Token, Space, HiddenToken
 
 from dataclasses import dataclass
 from typing import Any
@@ -64,7 +64,9 @@ class ConfigLightSourceSupplier(LightSourceSupplier):
         return self._config.spaces.get(space.space_name, DEFAULT_SPACE_LIGHT)
 
     def token_light(self, token: Token) -> int:
-        if token.item_name is not None:
+        if isinstance(token, HiddenToken):
+            return 0
+        elif token.item_name is not None:
             return self._config.items.get(token.item_name, DEFAULT_ITEM_LIGHT)
         else:
             return self._config.tokens.get(token.token_name, DEFAULT_TOKEN_LIGHT)

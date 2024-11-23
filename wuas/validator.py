@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from wuas.board import Board, BoardIntegrityError
+from wuas.board import Board, BoardIntegrityError, HiddenToken
 from wuas.config import ConfigFile
 
 
@@ -30,6 +30,8 @@ def validate(config: ConfigFile, board: Board) -> None:
         if not definitions.has_any_space(space.space_name):
             raise ValidationError(f"No such space {space.space_name}")
         for token_data in tokens:
+            if isinstance(token_data, HiddenToken):
+                continue  # Nothing to validate for hidden tokens.
             if not definitions.has_token(token_data.token_name):
                 raise ValidationError(f"No such token {token_data.token_name}")
             if token_data.item_name and not definitions.has_item(token_data.item_name):

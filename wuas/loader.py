@@ -3,14 +3,14 @@
 
 from __future__ import annotations
 
-from wuas.board import Board, TileData, Token, Attribute
+from wuas.board import Board, TileData, Token, Attribute, HiddenToken, ConcreteToken
 from wuas.graph import GraphEdge
 
 from typing import TextIO, NamedTuple
 import re
 
 
-KNOWN_VERSIONS = (1, 2, 3, 4)
+KNOWN_VERSIONS = (1, 2, 3, 4, 5)
 
 SPACE_LABEL_MARKER = '&'
 
@@ -33,8 +33,8 @@ def load_from_io(io: TextIO) -> Board:
     if version == 1:
         # Version 1 parses no metadata
         meta = {}
-    elif version in (2, 3, 4):
-        # Versions 2, 3, and 4 parse key-value pairs until it hits a newline
+    else:
+        # Versions > 1 parse key-value pairs until it hits a newline
         meta = _read_meta(io)
 
     floors = _read_floors(io, version)
@@ -118,19 +118,29 @@ def _split_at_bars(text: str) -> list[str]:
 
 
 def _read_tokens(io: TextIO, version: int) -> dict[str, Token]:
-    result = {}
+    result: dict[str, Token] = {}
     line = io.readline()
     while line != '' and line != '\n':
         abbreviation, name, item_name, x, y = line.split()
         if abbreviation == SPACE_LABEL_MARKER and version >= 4:
             raise ValueError("'&' is an invalid token abbreviation")
-        result[abbreviation] = Token(
-            token_name=name,
-            item_name=None if item_name == 'nil' else item_name,
-            position=(int(x), int(y)),
-        )
+        if version >= 5 and HiddenToken.is_hidden_name(name):
+            # Versions >= 5 support the "hidden" token marker
+            _assert_valid_hidden_token(item_name, x, y)
+            result[abbreviation] = HiddenToken(full_name=name)
+        else:
+            result[abbreviation] = ConcreteToken(
+                token_name=name,
+                item_name=None if item_name == 'nil' else item_name,
+                position=(int(x), int(y)),
+            )
         line = io.readline()
     return result
+
+
+def _assert_valid_hidden_token(item_name: str, x: str, y: str) -> None:
+    if item_name != 'nil' or x != '0' or y != '0':
+        raise ValueError(f"Invalid hidden token: {item_name} {x} {y}")
 
 
 def _read_attrs(io: TextIO) -> dict[str, Attribute]:

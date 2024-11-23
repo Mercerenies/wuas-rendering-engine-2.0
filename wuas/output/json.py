@@ -80,7 +80,7 @@ def _render_tokens(floor: Floor) -> list[Token]:
     tokens: list[Token] = []
     for x, y in floor.indices:
         current_space = floor.get_space(x, y)
-        for token in current_space.get_tokens():
+        for token in current_space.get_concrete_tokens():
             object_name = token.item_name if token.item_name is not None else token.token_name
             dx, dy = token.position
             tokens.append({

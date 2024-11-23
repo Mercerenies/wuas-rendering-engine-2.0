@@ -8,7 +8,7 @@ from wuas.config import normalize_space_name
 from wuas.graph import GraphEdge
 
 from dataclasses import dataclass
-from typing import Mapping, Sequence, Iterator
+from typing import Mapping, Sequence, Iterator, Union
 from functools import cached_property
 
 
@@ -387,6 +387,11 @@ class Space:
         except KeyError as exc:
             raise BoardIntegrityError(f"No such token {str(exc)} in references table")
 
+    def get_concrete_tokens(self) -> Sequence[ConcreteToken]:
+        """Returns an ordered sequence of all tokens on this space,
+        with HiddenTokens removed."""
+        return [ct for ct in self.get_tokens() if isinstance(ct, ConcreteToken)]
+
     def get_attributes(self) -> Sequence[Attribute]:
         """Returns an ordered sequence of the attribues on this
         space."""
@@ -396,13 +401,47 @@ class Space:
             raise BoardIntegrityError(f"No such attribute {str(exc)} in references table")
 
 
+Token = Union['ConcreteToken', 'HiddenToken']
+
+
 @dataclass(frozen=True)
-class Token:
+class ConcreteToken:
     """A token on a given space."""
     token_name: str
     item_name: str | None
     # (x, y) relative to the top-left corner of the space.
     position: tuple[int, int]
+
+
+@dataclass(frozen=True)
+class HiddenToken:
+    """Class representing a hidden token that does NOT get rendered.
+    These do NOT show up in the JSON or image outputs, but do show up
+    in the datafile output.
+
+    Hidden tokens should be used for internal documentation purposes,
+    specifically for things that the players should not see.
+
+    """
+    full_name: str
+
+    NAME_SUFFIX: str = '_HIDDEN'
+
+    @property
+    def name(self) -> str:
+        if self.full_name.endswith(self.NAME_SUFFIX):
+            return self.full_name[:-len(self.NAME_SUFFIX)]
+        else:
+            return self.full_name
+
+    @classmethod
+    def is_hidden_name(cls, name: str) -> bool:
+        return name.endswith(cls.NAME_SUFFIX)
+
+    def to_concrete(self) -> ConcreteToken:
+        """Explicit cast to a concrete token which will parse as this
+        hidden token."""
+        return ConcreteToken(self.full_name, None, (0, 0))
 
 
 @dataclass(frozen=True)

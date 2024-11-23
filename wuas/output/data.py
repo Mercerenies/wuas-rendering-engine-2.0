@@ -9,7 +9,7 @@ given in an earlier format."""
 
 from __future__ import annotations
 
-from wuas.board import Board, Floor
+from wuas.board import Board, Floor, Token, ConcreteToken, HiddenToken
 from wuas.config import ConfigFile
 from wuas.loader import SPACE_LABEL_MARKER
 from wuas.output.abc import OutputProducer
@@ -90,18 +90,26 @@ def _print_board_contents(floor: Floor, output_file: TextIO) -> None:
 
 
 def _print_token_references(board: Board, output_file: TextIO) -> None:
-    max_token_length = max(len(token.token_name) for token in board.tokens.values())
-    max_item_length = max(len(token.item_name or 'nil') for token in board.tokens.values())
+    max_token_length = max(len(_concretify_token(token).token_name) for token in board.tokens.values())
+    max_item_length = max(len(_concretify_token(token).item_name or 'nil') for token in board.tokens.values())
     for key, value in board.tokens.items():
+        token = _concretify_token(value)
         output_file.write("{} {:<{}} {:<{}} {:>2} {:>2}\n".format(
             key,
-            value.token_name,
+            token.token_name,
             max_token_length,
-            value.item_name or "nil",
+            token.item_name or "nil",
             max_item_length,
-            value.position[0],
-            value.position[1],
+            token.position[0],
+            token.position[1],
         ))
+
+
+def _concretify_token(token: Token) -> ConcreteToken:
+    if isinstance(token, HiddenToken):
+        return token.to_concrete()
+    else:
+        return token
 
 
 def _print_attribute_references(board: Board, output_file: TextIO) -> None:
