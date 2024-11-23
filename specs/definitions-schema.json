@@ -1,0 +1,186 @@
+{
+  "$id": "https://mercerenies.com/schema/definitions-schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A definitions file containing definitions for the various spaces and other entities in a particular instance of a WUAS game.",
+  "type": "object",
+  "properties": {
+    "spaces": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "coords": { "type": "string", "pattern": "^\\d+,\\d+,\\d+,\\d+$" },
+          "visual": { "type": "string" },
+          "desc": { "type": "string" },
+          "custom_layer": { "enum": ["VOID", "GAP", "GAP_OVERLAY", "REGULAR", "HIGHWAY", "HIGHWAY_SPACE", "TOKEN"] }
+        },
+        "required": ["name", "coords", "visual", "desc"],
+        "additionalProperties": false
+      }
+    },
+    "composite_spaces": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "effect": { "type": "string" },
+          "layers": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+        },
+        "required": ["effect", "layers"],
+        "additionalProperties": false
+      }
+    },
+    "items": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "desc": { "type": "string" },
+          "thumbnail": {
+            "type": "array",
+            "items": { "type": "integer" },
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "required": ["name", "desc"],
+        "additionalProperties": false
+      }
+    },
+    "effects": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/name-desc" }
+    },
+    "attributes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "outlinecolor": { "type": "string" },
+          "outlineside": { "enum": ["all", "bottom"] },
+          "desc": { "type": "string" }
+        },
+        "required": ["name", "outlinecolor", "desc"],
+        "additionalProperties": false
+      }
+    },
+    "captures": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/name-desc" }
+    },
+    "tokens": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "stats": { "type": "string" },
+          "desc": { "type": "string" },
+          "thumbnail": {
+            "type": "array",
+            "items": { "type": "integer" },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "span": {
+            "type": "array",
+            "items": { "type": "integer", "minimum": 1 },
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "required": ["name", "stats", "thumbnail", "desc"],
+        "additionalProperties": false
+      }
+    },
+    "rulings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "desc": { "type": "string" }
+        },
+        "required": ["desc"],
+        "additionalProperties": false
+      }
+    },
+    "current_turn": { "type": "integer", "minimum": 1 },
+    "turns": {
+      "type": "object",
+      "patternProperties": {
+        "^\\d+$": {
+          "type": "object",
+          "patternProperties": {
+            "^-?\\d+$": {
+              "type": "object",
+              "properties": {
+                "spaces": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "space": { "type": "string" },
+                            "attributes": {
+                              "type": "array",
+                              "items": { "type": "string" }
+                            }
+                          },
+                          "required": ["space", "attributes"],
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  }
+                },
+                "tokens": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "object": { "type": "string" },
+                      "position": {
+                        "type": "array",
+                        "items": { "type": "integer" },
+                        "minItems": 2,
+                        "maxItems": 2
+                      }
+                    },
+                    "required": ["object", "position"],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": ["spaces", "tokens"],
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["spaces", "items", "effects", "tokens", "rulings", "current_turn", "turns"],
+  "additionalProperties": false,
+  "$defs": {
+    "name-desc": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "desc": { "type": "string" }
+      },
+      "required": ["name", "desc"],
+      "additionalProperties": false
+    }
+  }
+}
