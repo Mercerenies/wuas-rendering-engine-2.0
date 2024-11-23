@@ -2,7 +2,7 @@
 JSON Schema files for the file formats are available here. There are
 three file formats used in processing WUAS data.
 
-* The JSON configuration format specifies the configuration for a
+* The [JSON configuration](config-schema.json) format specifies the configuration for a
   single game of WUAS, including a link to the JSON definitions file
   and to the image data for the game. The configuration file is read
   by this tool but never exported publicly.

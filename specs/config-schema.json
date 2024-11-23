@@ -1,0 +1,66 @@
+{
+  "$id": "https://mercerenies.com/schema/config-schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A configuration file containing internal information related to a single game of WUAS.",
+  "type": "object",
+  "properties": {
+    "files": {
+      "description": "Links to the relevant files used by this game.",
+      "type": "object",
+      "properties": {
+        "spaces": { "type": "string" },
+        "tokens": { "type": "string" },
+        "dict": { "type": "string" }
+      },
+      "required": ["spaces", "tokens", "dict"],
+      "additionalProperties": false
+    },
+    "resolution": {
+      "description": "Legacy object. If present, it should be empty.",
+      "type": "object",
+      "additionalProperties": false
+    },
+    "meta": {
+      "description": "Arbitrary key-value store, used in context-dependent ways by board processors.",
+      "type": "object",
+      "properties": {
+        "lighting": {
+          "description": "Specification of space and token behavior with respect to the lighting engine.",
+          "type": "object",
+          "properties": {
+            "darkness": { "type": "string", "description": "Color of darkened spaces." },
+            "spaces": {
+              "type": "object",
+              "additionalProperties": { "type": "integer", "minimum": 0 }
+            },
+            "items": {
+              "type": "object",
+              "additionalProperties": { "type": "integer", "minimum": 0 }
+            },
+            "tokens": {
+              "type": "object",
+              "additionalProperties": { "type": "integer", "minimum": 0 }
+            },
+            "adjacency": {
+              "type": "object",
+              "additionalProperties": { "type": "string" }
+            },
+            "diminishing": {
+              "type": "object",
+              "additionalProperties": { "type": "integer", "minimum": 0 }
+            }
+          },
+          "required": ["darkness", "spaces", "items", "tokens", "adjacency", "diminishing"],
+          "additionalProperties": false
+        },
+        "mirrorsolids": {
+          "description": "List of space names that should be considered 'solid' for board mirroring purposes.",
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "required": ["files"]
+}
