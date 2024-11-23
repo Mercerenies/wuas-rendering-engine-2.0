@@ -24,7 +24,7 @@ COMMENT_LINES = (
 
 SPACE_TEXT_WIDTH = 10
 HEADER_SLOT = '+' + '-' * SPACE_TEXT_WIDTH
-CURRENT_VERSION_NUMBER = 4
+CURRENT_VERSION_NUMBER = 5
 
 
 def render_to_data_file(board: Board, output_file: TextIO) -> None:
