@@ -11,3 +11,5 @@ formats:
 The original rendering engine can be found [at
 `wuas-render`](https://github.com/Mercerenies/wuas-render). The 2.0
 engine is backward-compatible with that one.
+
+For details on the input file format, see [`datafile_format.md`](datafile_format.md)
