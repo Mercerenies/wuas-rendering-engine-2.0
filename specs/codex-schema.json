@@ -1,0 +1,26 @@
+{
+  "$id": "https://mercerenies.com/schema/codex-schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A codex containing definitions for every WUAS game executed by a single host.",
+  "type": "object",
+  "properties": {
+    "dicts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "shortname": { "type": "string" },
+          "json": { "type": "string" },
+          "spaces": { "type": "string" },
+          "tokens": { "type": "string" },
+          "prefix": { "type": "string", "maxLength": 1 }
+        },
+        "required": ["name", "shortname", "json", "spaces", "tokens", "prefix"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["dicts"],
+  "additionalProperties": false
+}
