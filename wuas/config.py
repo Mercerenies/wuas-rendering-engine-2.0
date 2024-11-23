@@ -9,7 +9,7 @@ from wuas.constants import Layer
 from PIL import Image
 
 import json
-from typing import Any, Literal
+from typing import Any, Literal, cast
 from dataclasses import dataclass
 from functools import cached_property
 
@@ -63,7 +63,7 @@ class ConfigFile:
         """A dictionary of metadata, whose format is unspecified but
         which can be used to store arbitrary key-value data in the
         configuration file."""
-        return self._json_data['meta']
+        return cast('dict[str, Any]', self._json_data['meta'])
 
 
 class DefinitionsFile:

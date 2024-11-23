@@ -10,18 +10,18 @@ from wuas.processing.abc import BoardProcessor
 
 from typing import Callable, Type, TypeVar, Any, overload
 
-_T = TypeVar("_T", bound=BoardProcessor)
+_T_Type = TypeVar("_T_Type", bound=Type[BoardProcessor])
 
 REGISTERED_PROCESSORS: dict[str, Callable[[], BoardProcessor]] = {}
 
 
 @overload
-def registered_processor(cls: Type[_T]) -> Type[_T]: ...
+def registered_processor(cls: _T_Type) -> _T_Type: ...
 @overload
-def registered_processor(*, aliases: list[str]) -> Callable[[Type[_T]], Type[_T]]: ...
+def registered_processor(*, aliases: list[str]) -> Callable[[_T_Type], _T_Type]: ...
 
 
-def registered_processor(cls: Any = None, *, aliases: Any = None):
+def registered_processor(cls: Any = None, *, aliases: Any = None) -> Any:
     """Decorator which registers a class as a processor. The class must
     derive from BoardProcessor and must be constructible with no
     arguments.
@@ -46,7 +46,7 @@ def registered_processor(cls: Any = None, *, aliases: Any = None):
     if aliases is None:
         return registered_processor(aliases=[])(cls)
 
-    def wrapper(cls: Any):
+    def wrapper(cls: _T_Type) -> _T_Type:
         REGISTERED_PROCESSORS[cls.__module__ + "." + cls.__name__] = cls
         for alias in aliases:
             REGISTERED_PROCESSORS[alias] = cls
