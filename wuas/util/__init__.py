@@ -3,12 +3,13 @@
 
 from __future__ import annotations
 
-from typing import Iterator, Any
+from typing import Iterator, Any, cast
 import math
 from pathlib import Path
 import importlib
 import os
 import os.path
+import dataclasses
 
 from PIL import ImageDraw
 
@@ -88,3 +89,34 @@ def import_immediate_submodules(
             if os.path.isdir(full_path) and os.path.isfile(init_py):
                 module_name = f'{current_module_name}.{file}'
                 importlib.import_module(module_name)
+
+
+def to_dataclass_checked[T](value: Any, cls: type[T]) -> T:
+    """Converts the value to an instance of the given dataclass. If
+    any of the fields fail to typecheck (to the extent possible at
+    runtime in Python), then this function raises an error. If cls is
+    not a dataclass, then an error is likewise raised."""
+    if not dataclasses.is_dataclass(cls):
+        raise TypeError('to_dataclass_checked only works with dataclasses')
+    args: dict[str, Any] = {}
+    for field in dataclasses.fields(cls):
+        if not field.init:
+            continue
+        is_required = field.default is dataclasses.MISSING and field.default_factory is dataclasses.MISSING
+        try:
+            args[field.name] = getattr(value, field.name)
+        except AttributeError:
+            if is_required:
+                raise
+        field_type = _parse_dataclass_type(field.type)
+        if not isinstance(args[field.name], field_type):
+            raise TypeError(f'Field {field.name} in {cls} (value = {args[field.name]}) is not of type {field.type}')
+    return cast(T, cls(**args))
+
+
+def _parse_dataclass_type(type_: str | type[object] | None) -> type[object]:
+    if isinstance(type_, type):
+        return type_
+    if type_ is None:
+        return object
+    return eval(type_)
