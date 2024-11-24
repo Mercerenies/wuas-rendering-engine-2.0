@@ -93,7 +93,6 @@ def interpret_output_producer(instruction: str,
 
 
 def interpret_processor(instruction: str) -> BoardProcessor:
-    choices = ', '.join(sorted(REGISTERED_PROCESSORS.keys()))
     try:
         return REGISTERED_PROCESSORS[instruction]()
     except KeyError:
