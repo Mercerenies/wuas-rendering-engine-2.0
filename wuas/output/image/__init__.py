@@ -13,7 +13,8 @@ from .majora import MAJORAS_MOON_LAYER, render_moon
 
 from PIL import Image, ImageDraw
 
-from typing import Set, Iterable, NamedTuple, Literal, Protocol, cast
+from typing import Set, Iterable, NamedTuple, Literal
+from dataclasses import dataclass
 import argparse
 
 
@@ -142,39 +143,38 @@ def render_image(config: ConfigFile, board: Board, floor_number: int, floor: Flo
     return renderer.build()
 
 
+@dataclass(frozen=True, kw_only=True)
+class ImageProducerArgs:
+    floor_number: int
+
+
+@dataclass(frozen=True, kw_only=True)
+class SavedImageProducerArgs(ImageProducerArgs):
+    output_filename: str
+
+
 @registered_producer(aliases=["show-image"])
 class DisplayedImageProducer(OutputProducer):
     """OutputProducer that outputs an image to a new on-screen window."""
+    ARGUMENTS_TYPE = ImageProducerArgs
 
-    def produce_output(self, config: ConfigFile, board: Board, args: argparse.Namespace) -> None:
-        img_args = cast(ImageProducerArgs, args)
-        floor_number = img_args.floor_number
-        image = render_image(config, board, floor_number, board.floors[floor_number])
+    def produce_output(self, config: ConfigFile, board: Board, args: ImageProducerArgs) -> None:
+        image = render_image(config, board, args.floor_number, board.floors[args.floor_number])
         image.show()
 
     def init_subparser(self, subparser: argparse.ArgumentParser) -> None:
         subparser.add_argument('-F', '--floor-number', type=int, required=True)
 
 
-class ImageProducerArgs(Protocol):
-    floor_number: int
-
-
 @registered_producer(aliases=["save-image"])
 class SavedImageProducer(OutputProducer):
     """OutputProducer that outputs an image to the given file."""
+    ARGUMENTS_TYPE = SavedImageProducerArgs
 
-    def produce_output(self, config: ConfigFile, board: Board, args: argparse.Namespace) -> None:
-        img_args = cast(SavedImageProducerArgs, args)
-        floor_number = img_args.floor_number
-        output_filename = img_args.output_filename
-        image = render_image(config, board, floor_number, board.floors[floor_number])
-        image.save(output_filename)
+    def produce_output(self, config: ConfigFile, board: Board, args: SavedImageProducerArgs) -> None:
+        image = render_image(config, board, args.floor_number, board.floors[args.floor_number])
+        image.save(args.output_filename)
 
     def init_subparser(self, subparser: argparse.ArgumentParser) -> None:
         subparser.add_argument('-F', '--floor-number', type=int, required=True)
         subparser.add_argument('-o', '--output-filename', required=True)
-
-
-class SavedImageProducerArgs(ImageProducerArgs, Protocol):
-    output_filename: str

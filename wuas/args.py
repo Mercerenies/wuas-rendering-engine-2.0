@@ -8,6 +8,7 @@ from wuas.output.registry import REGISTERED_PRODUCERS
 from wuas.processing import BoardProcessor
 from wuas.processing.registry import REGISTERED_PROCESSORS
 
+from typing import Any
 import argparse
 from dataclasses import dataclass
 
@@ -19,7 +20,7 @@ class Arguments:
     config_filename: str
     validate: bool
     board_processors: list[BoardProcessor]
-    output_producer: OutputProducer
+    output_producer: OutputProducer[Any]
 
 
 class ArgumentsError(Exception):

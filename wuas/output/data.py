@@ -12,7 +12,7 @@ from __future__ import annotations
 from wuas.board import Board, Floor, Token, ConcreteToken, HiddenToken
 from wuas.config import ConfigFile
 from wuas.loader import SPACE_LABEL_MARKER
-from wuas.output.abc import OutputProducer
+from wuas.output.abc import OutputProducer, NoArguments
 from wuas.output.registry import REGISTERED_PRODUCERS
 
 import sys
@@ -124,10 +124,10 @@ def _print_graph_data(board: Board, output_file: TextIO) -> None:
         output_file.write(edge.to_data_str() + "\n")
 
 
-class DatafileProducer(OutputProducer):
+class DatafileProducer(OutputProducer[NoArguments]):
     """OutputProducer that outputs to a given file-like object."""
-
     _io: TextIO
+    ARGUMENTS_TYPE = NoArguments
 
     def __init__(self, io: TextIO) -> None:
         """A datafile producer for the given file-like object. The
@@ -140,7 +140,7 @@ class DatafileProducer(OutputProducer):
         """A datafile producer which prints to sys.stdout."""
         return cls(sys.stdout)
 
-    def produce_output(self, config: ConfigFile, board: Board, args: argparse.Namespace) -> None:
+    def produce_output(self, config: ConfigFile, board: Board, args: NoArguments) -> None:
         render_to_data_file(board, self._io)
 
     def init_subparser(self, subparser: argparse.ArgumentParser) -> None:
