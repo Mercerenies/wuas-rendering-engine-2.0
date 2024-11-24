@@ -13,3 +13,5 @@ The original rendering engine can be found [at
 engine is backward-compatible with that one.
 
 For details on the input file format, see [`datafile_format.md`](datafile_format.md)
+
+Minimum supported Python version: 3.12
