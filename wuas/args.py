@@ -3,7 +3,8 @@
 
 from __future__ import annotations
 
-from wuas.output import OutputProducer, DisplayedImageProducer, SavedImageProducer, JsonProducer, DatafileProducer
+from wuas.output import OutputProducer, OutputArgs
+from wuas.output.registry import REGISTERED_PRODUCERS
 from wuas.processing import BoardProcessor
 from wuas.processing.registry import REGISTERED_PROCESSORS
 
@@ -20,6 +21,9 @@ class Arguments:
     validate: bool
     board_processors: list[BoardProcessor]
     output_producer: OutputProducer
+
+    def to_output_args(self) -> OutputArgs:
+        return OutputArgs(output_filename=self.output_filename, floor_number=self.floor_number)
 
 
 class ArgumentsError(Exception):
@@ -62,34 +66,11 @@ def interpret_args(namespace: argparse.Namespace) -> Arguments:
 def interpret_output_producer(instruction: str,
                               output_filename: str | None,
                               output_floor_number: int | None) -> OutputProducer:
-    choices = 'show-image, save-image, json, datafile'
-    match instruction:
-        case "show-image":
-            if output_filename is not None:
-                raise ArgumentsError("show-image does not take an output file argument")
-            if output_floor_number is None:
-                raise ArgumentsError("show-image requires an output floor argument")
-            return DisplayedImageProducer(output_floor_number)
-        case "save-image":
-            if output_filename is None:
-                raise ArgumentsError("save-image requires an output file argument")
-            if output_floor_number is None:
-                raise ArgumentsError("show-image requires an output floor argument")
-            return SavedImageProducer(output_filename, output_floor_number)
-        case "json":
-            if output_filename is not None:
-                raise ArgumentsError("json does not take an output file argument")
-            if output_floor_number is not None:
-                raise ArgumentsError("json does not take an output floor argument")
-            return JsonProducer.stdout()
-        case "datafile":
-            if output_filename is not None:
-                raise ArgumentsError("datafile does not take an output file argument")
-            if output_floor_number is not None:
-                raise ArgumentsError("datafile does not take an output floor argument")
-            return DatafileProducer.stdout()
-        case _:
-            raise ArgumentsError(f"Invalid output producer {instruction}, choices are {choices}")
+    try:
+        return REGISTERED_PRODUCERS[instruction]()
+    except KeyError:
+        choices = ', '.join(sorted(REGISTERED_PRODUCERS.keys()))
+        raise ArgumentsError(f"Invalid output producer {instruction}, choices are {choices}") from None
 
 
 def interpret_processor(instruction: str) -> BoardProcessor:

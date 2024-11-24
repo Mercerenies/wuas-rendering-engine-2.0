@@ -16,4 +16,4 @@ if args.validate:
 for processor in args.board_processors:
     processor.run(config, board)
 
-args.output_producer.produce_output(config, board)
+args.output_producer.produce_output(config, board, args.to_output_args())

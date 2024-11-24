@@ -2,16 +2,13 @@
 """Output file formats. This module exports OutputProducer and several
 useful subclasses of it."""
 
-from .abc import OutputProducer
-from .image import DisplayedImageProducer, SavedImageProducer
-from .json import JsonProducer
-from .data import DatafileProducer
+from .abc import OutputProducer, OutputArgs
+from wuas.util import import_immediate_submodules
 
 __all__ = (
-    'OutputProducer',
-    'DisplayedImageProducer', 'SavedImageProducer',
-    'JsonProducer',
-    'DatafileProducer',
+    'OutputProducer', 'OutputArgs',
 )
 
-# TODO Registry-like API, similar to what we have for processors.
+# Load all modules in this directory, to allow processors to register
+# themselves.
+import_immediate_submodules(__file__, __name__)

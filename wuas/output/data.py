@@ -12,7 +12,8 @@ from __future__ import annotations
 from wuas.board import Board, Floor, Token, ConcreteToken, HiddenToken
 from wuas.config import ConfigFile
 from wuas.loader import SPACE_LABEL_MARKER
-from wuas.output.abc import OutputProducer
+from wuas.output.abc import OutputProducer, OutputArgs
+from wuas.output.registry import REGISTERED_PRODUCERS
 
 import sys
 from typing import TextIO
@@ -138,5 +139,9 @@ class DatafileProducer(OutputProducer):
         """A datafile producer which prints to sys.stdout."""
         return cls(sys.stdout)
 
-    def produce_output(self, config: ConfigFile, board: Board) -> None:
+    def produce_output(self, config: ConfigFile, board: Board, args: OutputArgs) -> None:
+        args.assert_no_args()
         render_to_data_file(board, self._io)
+
+
+REGISTERED_PRODUCERS.register_callable('datafile', DatafileProducer.stdout)

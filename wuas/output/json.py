@@ -7,7 +7,8 @@ from __future__ import annotations
 from wuas.board import Board, Floor, Space
 from wuas.config import ConfigFile, normalize_space_name
 from wuas.constants import SPACE_WIDTH, SPACE_HEIGHT
-from wuas.output.abc import OutputProducer
+from wuas.output.abc import OutputProducer, OutputArgs
+from wuas.output.registry import REGISTERED_PRODUCERS
 
 import sys
 import json
@@ -103,7 +104,11 @@ class JsonProducer(OutputProducer):
         """JsonProducer which outputs to sys.stdout."""
         return cls(sys.stdout)
 
-    def produce_output(self, config: ConfigFile, board: Board) -> None:
+    def produce_output(self, config: ConfigFile, board: Board, args: OutputArgs) -> None:
+        args.assert_no_args()
         json_data = render_to_json(config, board)
         json.dump(json_data, self._io)
         self._io.write('\n')
+
+
+REGISTERED_PRODUCERS.register_callable('json', JsonProducer.stdout)

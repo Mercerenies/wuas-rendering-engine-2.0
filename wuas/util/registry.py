@@ -30,7 +30,7 @@ class ClassRegistry[T](Mapping[str, Callable[[], T]]):
     @overload
     def register_class[S: type[T]](self, cls: S) -> S: ...
     @overload
-    def register_class[S: type[T]](self, *, aliases: list[str]) -> Callable[[S], S]: ...
+    def register_class(self, *, aliases: list[str]) -> Callable[[type[T]], type[T]]: ...
 
     def register_class(self, cls: Any = None, *, aliases: Any = None) -> Any:
         """Decorator which registers a class with this registry. The
@@ -57,9 +57,9 @@ class ClassRegistry[T](Mapping[str, Callable[[], T]]):
         if aliases is None:
             return self.register_class(aliases=[])(cls)
 
-        def wrapper[S: type[T]](cls: S) -> S:
-            self._dict[f"{cls.__module__}.{cls.__name__}"] = cls
+        def wrapper(cls: type[T]) -> type[T]:
+            self.register_callable(f"{cls.__module__}.{cls.__name__}", cls)
             for alias in aliases:
-                self._dict[alias] = cls
+                self.register_callable(alias, cls)
             return cls
         return wrapper

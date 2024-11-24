@@ -7,7 +7,8 @@ from wuas.util import draw_dotted_line
 from wuas.board import Board, Floor, Space
 from wuas.constants import SPACE_WIDTH, SPACE_HEIGHT, Layer
 from wuas.config import ConfigFile, find_matching_for_layer
-from wuas.output.abc import OutputProducer
+from wuas.output.abc import OutputProducer, OutputArgs
+from wuas.output.registry import registered_producer
 from .majora import MAJORAS_MOON_LAYER, render_moon
 
 from PIL import Image, ImageDraw
@@ -140,27 +141,30 @@ def render_image(config: ConfigFile, board: Board, floor_number: int, floor: Flo
     return renderer.build()
 
 
+@registered_producer(aliases=["show-image"])
 class DisplayedImageProducer(OutputProducer):
     """OutputProducer that outputs an image to a new on-screen window."""
-    _floor_number: int
 
-    def __init__(self, floor_number: int) -> None:
-        self._floor_number = floor_number
-
-    def produce_output(self, config: ConfigFile, board: Board) -> None:
-        image = render_image(config, board, self._floor_number, board.floors[self._floor_number])
+    def produce_output(self, config: ConfigFile, board: Board, args: OutputArgs) -> None:
+        floor_number = args.floor_number
+        if floor_number is None:
+            raise ValueError("Argument --floor-number (-F) is required")
+        if args.output_filename is not None:
+            raise ValueError(OutputArgs.UNEXPECTED_OUTPUT_FILENAME)
+        image = render_image(config, board, floor_number, board.floors[floor_number])
         image.show()
 
 
+@registered_producer(aliases=["save-image"])
 class SavedImageProducer(OutputProducer):
     """OutputProducer that outputs an image to the given file."""
-    output_filename: str
-    _floor_number: int
 
-    def __init__(self, output_filename: str, floor_number: int) -> None:
-        self.output_filename = output_filename
-        self._floor_number = floor_number
-
-    def produce_output(self, config: ConfigFile, board: Board) -> None:
-        image = render_image(config, board, self._floor_number, board.floors[self._floor_number])
-        image.save(self.output_filename)
+    def produce_output(self, config: ConfigFile, board: Board, args: OutputArgs) -> None:
+        floor_number = args.floor_number
+        output_filename = args.output_filename
+        if floor_number is None:
+            raise ValueError("Argument --floor-number (-F) is required")
+        if output_filename is None:
+            raise ValueError("Argument --output-filename (-o) is required")
+        image = render_image(config, board, floor_number, board.floors[floor_number])
+        image.save(output_filename)
