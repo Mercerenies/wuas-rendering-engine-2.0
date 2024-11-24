@@ -3,18 +3,25 @@
 creates output."""
 
 from .abc import BoardProcessor
-from .lighting import LightingProcessor
 
 import os
 import os.path
 import importlib
 
 __all__ = (
-    'BoardProcessor', 'LightingProcessor',
+    'BoardProcessor',
 )
 
 # Load all modules in this directory, to allow processors to register
-# themselves. (TODO This excludes directories)
-_files = [f for f in os.listdir(os.path.dirname(__file__)) if f.endswith('.py') and f != '__init__.py']
-for current_file in _files:
-    importlib.import_module(__name__ + "." + current_file[:-3])
+# themselves.
+current_module_name = __name__.removesuffix('.__init__')
+for current_file in os.listdir(os.path.dirname(__file__)):
+    if current_file.endswith('.py') and current_file != '__init__':
+        module_name = current_module_name + "." + current_file[:-3]
+        importlib.import_module(module_name)
+    else:
+        full_path = os.path.join(os.path.dirname(__file__), current_file)
+        init_py = os.path.join(full_path, '__init__.py')
+        if os.path.isdir(full_path) and os.path.isfile(init_py):
+            module_name = current_module_name + "." + current_file
+            importlib.import_module(module_name)

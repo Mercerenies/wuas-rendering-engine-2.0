@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from typing import Iterator, Any
 import math
+from pathlib import Path
 
 from PIL import ImageDraw
 
@@ -47,3 +48,12 @@ def draw_dotted_line(draw: ImageDraw.ImageDraw,
         yy1 = y0 + t1 * math.sin(angle)
         draw.line(((xx0, yy0), (xx1, yy1)), fill=fill, width=width, joint=joint)
         t += dash_width + gap_width
+
+
+def walk_files_relative(root_dir: Path | str) -> Iterator[Path]:
+    """Returns paths relative to directory."""
+    if isinstance(root_dir, str):
+        root_dir = Path(root_dir)
+    for dir, _, filenames in root_dir.walk():
+        for filename in filenames:
+            yield dir.relative_to(root_dir) / filename
