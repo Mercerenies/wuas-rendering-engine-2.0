@@ -2,11 +2,11 @@
 """Output file formats. This module exports OutputProducer and several
 useful subclasses of it."""
 
-from .abc import OutputProducer, OutputArgs
+from .abc import OutputProducer
 from wuas.util import import_immediate_submodules
 
 __all__ = (
-    'OutputProducer', 'OutputArgs',
+    'OutputProducer',
 )
 
 # Load all modules in this directory, to allow processors to register

@@ -7,11 +7,12 @@ from __future__ import annotations
 from wuas.board import Board, Floor, Space
 from wuas.config import ConfigFile, normalize_space_name
 from wuas.constants import SPACE_WIDTH, SPACE_HEIGHT
-from wuas.output.abc import OutputProducer, OutputArgs
+from wuas.output.abc import OutputProducer
 from wuas.output.registry import REGISTERED_PRODUCERS
 
 import sys
 import json
+import argparse
 from typing import TypedDict, TypeAlias, TextIO
 
 WuasJsonOutput: TypeAlias = 'dict[str, FloorData]'
@@ -104,11 +105,14 @@ class JsonProducer(OutputProducer):
         """JsonProducer which outputs to sys.stdout."""
         return cls(sys.stdout)
 
-    def produce_output(self, config: ConfigFile, board: Board, args: OutputArgs) -> None:
-        args.assert_no_args()
+    def produce_output(self, config: ConfigFile, board: Board, args: argparse.Namespace) -> None:
         json_data = render_to_json(config, board)
         json.dump(json_data, self._io)
         self._io.write('\n')
+
+    def init_subparser(self, subparser: argparse.ArgumentParser) -> None:
+        """JsonProducer accepts no subarguments."""
+        pass
 
 
 REGISTERED_PRODUCERS.register_callable('json', JsonProducer.stdout)

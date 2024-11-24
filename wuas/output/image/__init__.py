@@ -7,13 +7,14 @@ from wuas.util import draw_dotted_line
 from wuas.board import Board, Floor, Space
 from wuas.constants import SPACE_WIDTH, SPACE_HEIGHT, Layer
 from wuas.config import ConfigFile, find_matching_for_layer
-from wuas.output.abc import OutputProducer, OutputArgs
+from wuas.output.abc import OutputProducer
 from wuas.output.registry import registered_producer
 from .majora import MAJORAS_MOON_LAYER, render_moon
 
 from PIL import Image, ImageDraw
 
-from typing import Set, Iterable, NamedTuple, Literal
+from typing import Set, Iterable, NamedTuple, Literal, Protocol, cast
+import argparse
 
 
 class AttributeColor(NamedTuple):
@@ -145,26 +146,35 @@ def render_image(config: ConfigFile, board: Board, floor_number: int, floor: Flo
 class DisplayedImageProducer(OutputProducer):
     """OutputProducer that outputs an image to a new on-screen window."""
 
-    def produce_output(self, config: ConfigFile, board: Board, args: OutputArgs) -> None:
-        floor_number = args.floor_number
-        if floor_number is None:
-            raise ValueError("Argument --floor-number (-F) is required")
-        if args.output_filename is not None:
-            raise ValueError(OutputArgs.UNEXPECTED_OUTPUT_FILENAME)
+    def produce_output(self, config: ConfigFile, board: Board, args: argparse.Namespace) -> None:
+        img_args = cast(ImageProducerArgs, args)
+        floor_number = img_args.floor_number
         image = render_image(config, board, floor_number, board.floors[floor_number])
         image.show()
+
+    def init_subparser(self, subparser: argparse.ArgumentParser) -> None:
+        subparser.add_argument('-F', '--floor-number', type=int, required=True)
+
+
+class ImageProducerArgs(Protocol):
+    floor_number: int
 
 
 @registered_producer(aliases=["save-image"])
 class SavedImageProducer(OutputProducer):
     """OutputProducer that outputs an image to the given file."""
 
-    def produce_output(self, config: ConfigFile, board: Board, args: OutputArgs) -> None:
-        floor_number = args.floor_number
-        output_filename = args.output_filename
-        if floor_number is None:
-            raise ValueError("Argument --floor-number (-F) is required")
-        if output_filename is None:
-            raise ValueError("Argument --output-filename (-o) is required")
+    def produce_output(self, config: ConfigFile, board: Board, args: argparse.Namespace) -> None:
+        img_args = cast(SavedImageProducerArgs, args)
+        floor_number = img_args.floor_number
+        output_filename = img_args.output_filename
         image = render_image(config, board, floor_number, board.floors[floor_number])
         image.save(output_filename)
+
+    def init_subparser(self, subparser: argparse.ArgumentParser) -> None:
+        subparser.add_argument('-F', '--floor-number', type=int, required=True)
+        subparser.add_argument('-o', '--output-filename', required=True)
+
+
+class SavedImageProducerArgs(ImageProducerArgs, Protocol):
+    output_filename: str

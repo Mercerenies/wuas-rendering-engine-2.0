@@ -2,18 +2,20 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 
 from wuas.board import Board
 from wuas.config import ConfigFile
+
+import argparse
 
 
 class OutputProducer(ABC):
     """A class capable of producing output in some form from a
     configuration and a board object."""
 
+    # TODO: Stronger typing on args?
     @abstractmethod
-    def produce_output(self, config: ConfigFile, board: Board, args: OutputArgs) -> None:
+    def produce_output(self, config: ConfigFile, board: Board, args: argparse.Namespace) -> None:
         """Produces output in the format prescribed by this producer.
         This method should NOT modify the board.
 
@@ -23,17 +25,8 @@ class OutputProducer(ABC):
         via a builder-like API."""
         ...
 
-
-@dataclass(frozen=True, kw_only=True)
-class OutputArgs:
-    output_filename: str | None = None
-    floor_number: int | None = None
-
-    UNEXPECTED_OUTPUT_FILENAME = "Unexpected argument --output-filename (-o) for output producer"
-    UNEXPECTED_FLOOR_NUMBER = "Unexpected argument --floor-number (-F) for output producer"
-
-    def assert_no_args(self) -> None:
-        if self.output_filename is not None:
-            raise ValueError(self.UNEXPECTED_OUTPUT_FILENAME)
-        if self.floor_number is not None:
-            raise ValueError(self.UNEXPECTED_FLOOR_NUMBER)
+    @abstractmethod
+    def init_subparser(self, subparser: argparse.ArgumentParser) -> None:
+        """Initializes the subparser which will be used to parse
+        arguments for this particular output producer."""
+        ...
