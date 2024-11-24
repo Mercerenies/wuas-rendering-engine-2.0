@@ -44,9 +44,16 @@ def validate(config: ConfigFile, board: Board) -> None:
             if space.space_label in unique_space_labels:
                 raise ValidationError(f"Duplicate space label {space.space_label}")
             unique_space_labels.add(space.space_label)
-    # Verify that any graph edges represent spaces that exist.
+    # Verify that any graph edges represent spaces that exist and are
+    # on the same floor.
     for graph_edge in board.graph_edges:
         if graph_edge.from_node not in unique_space_labels:
             raise ValidationError(f"No such space label {graph_edge.from_node}")
         if graph_edge.to_node not in unique_space_labels:
             raise ValidationError(f"No such space label {graph_edge.to_node}")
+        _, _, from_floor = board.labels_map[graph_edge.from_node]
+        _, _, to_floor = board.labels_map[graph_edge.to_node]
+        if from_floor != to_floor:
+            raise ValidationError(
+                f"Graph edge {graph_edge} must be between spaces on the same floor",
+            )

@@ -94,7 +94,7 @@ class Renderer:
         for edge in self.board.graph_edges:
             src_x, src_y, src_z = self.board.labels_map[edge.from_node]
             dest_x, dest_y, _ = self.board.labels_map[edge.to_node]
-            if src_z != self.floor_number:  # TODO: Validator should verify that src_z == dest_z
+            if src_z != self.floor_number:
                 return
             draw_dotted_line(
                 draw,
