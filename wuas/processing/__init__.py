@@ -5,10 +5,6 @@ creates output."""
 from .abc import BoardProcessor
 from wuas.util import import_immediate_submodules
 
-import os
-import os.path
-import importlib
-
 __all__ = (
     'BoardProcessor',
 )
