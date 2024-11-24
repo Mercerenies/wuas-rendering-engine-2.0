@@ -4,9 +4,11 @@
 from __future__ import annotations
 
 from wuas.constants import Layer
+from wuas.util import project_root
 
 from typing import TYPE_CHECKING
-from PIL import Image, ImageDraw
+from PIL import Image
+from pathlib import Path
 
 if TYPE_CHECKING:
     from . import Renderer
@@ -24,7 +26,7 @@ def render_moon(renderer: Renderer) -> None:
         return
     if majora_value == 0:
         return
-    image: Image.Image = Image.open('majora.png')
+    image: Image.Image = Image.open(_moon_image_path())
     w, h = image.size
     if majora_value == 1:
         w //= 4
@@ -35,3 +37,7 @@ def render_moon(renderer: Renderer) -> None:
     image = image.resize((w, h))
     imag_w, _ = renderer.image.size
     renderer.image.paste(image, (imag_w - w + 16, -16), image)
+
+
+def _moon_image_path() -> Path:
+    return project_root() / "res" / "majora.png"

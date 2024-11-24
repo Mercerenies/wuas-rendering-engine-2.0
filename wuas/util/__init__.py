@@ -120,3 +120,7 @@ def _parse_dataclass_type(type_: str | type[object] | None) -> type[object]:
     if type_ is None:
         return object
     return cast('type[object]', eval(type_))
+
+
+def project_root() -> Path:
+    return Path(__file__).parent.parent.parent
