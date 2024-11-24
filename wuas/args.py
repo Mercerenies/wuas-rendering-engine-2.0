@@ -65,7 +65,7 @@ def interpret_args(namespace: argparse.Namespace) -> Arguments:
     )
 
 
-def interpret_output_producer(instruction: str) -> OutputProducer:
+def interpret_output_producer(instruction: str) -> OutputProducer[Any]:
     try:
         return REGISTERED_PRODUCERS[instruction]()
     except KeyError:

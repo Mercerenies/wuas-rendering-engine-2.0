@@ -154,7 +154,7 @@ class SavedImageProducerArgs(ImageProducerArgs):
 
 
 @registered_producer(aliases=["show-image"])
-class DisplayedImageProducer(OutputProducer):
+class DisplayedImageProducer(OutputProducer[ImageProducerArgs]):
     """OutputProducer that outputs an image to a new on-screen window."""
     ARGUMENTS_TYPE = ImageProducerArgs
 
@@ -167,7 +167,7 @@ class DisplayedImageProducer(OutputProducer):
 
 
 @registered_producer(aliases=["save-image"])
-class SavedImageProducer(OutputProducer):
+class SavedImageProducer(OutputProducer[SavedImageProducerArgs]):
     """OutputProducer that outputs an image to the given file."""
     ARGUMENTS_TYPE = SavedImageProducerArgs
 

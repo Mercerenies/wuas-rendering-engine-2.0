@@ -8,11 +8,11 @@ REGISTERED_PROCESSORS mapping.
 
 from __future__ import annotations
 
-import argparse
+from typing import Any
 
 from wuas.output.abc import OutputProducer
 from wuas.util.registry import ClassRegistry
 
-REGISTERED_PRODUCERS = ClassRegistry[OutputProducer[argparse.Namespace]]()
+REGISTERED_PRODUCERS = ClassRegistry[OutputProducer[Any]]()
 
 registered_producer = REGISTERED_PRODUCERS.register_class
