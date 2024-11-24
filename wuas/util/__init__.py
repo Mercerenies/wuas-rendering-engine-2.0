@@ -91,7 +91,7 @@ def import_immediate_submodules(
                 importlib.import_module(module_name)
 
 
-def to_dataclass_checked[T](value: Any, cls: type[T]) -> T:
+def to_dataclass_checked[T](cls: type[T], value: Any) -> T:
     """Converts the value to an instance of the given dataclass. If
     any of the fields fail to typecheck (to the extent possible at
     runtime in Python), then this function raises an error. If cls is
@@ -119,4 +119,4 @@ def _parse_dataclass_type(type_: str | type[object] | None) -> type[object]:
         return type_
     if type_ is None:
         return object
-    return eval(type_)
+    return cast('type[object]', eval(type_))
