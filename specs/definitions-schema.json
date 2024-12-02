@@ -153,6 +153,12 @@
                         "items": { "type": "integer" },
                         "minItems": 2,
                         "maxItems": 2
+                      },
+                      "span": {
+                        "type": "array",
+                        "items": { "type": "integer" },
+                        "minItems": 2,
+                        "maxItems": 2
                       }
                     },
                     "required": ["object", "position"],

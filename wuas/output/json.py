@@ -4,7 +4,7 @@ WUAS interactive web UI."""
 
 from __future__ import annotations
 
-from wuas.board import Board, Floor, Space
+from wuas.board import Board, Floor, Space, ConcreteToken
 from wuas.config import ConfigFile, normalize_space_name
 from wuas.constants import SPACE_WIDTH, SPACE_HEIGHT
 from wuas.output.abc import OutputProducer, NoArguments
@@ -13,7 +13,7 @@ from wuas.output.registry import REGISTERED_PRODUCERS
 import sys
 import json
 import argparse
-from typing import TypedDict, TypeAlias, TextIO
+from typing import TypedDict, TypeAlias, TextIO, NotRequired
 
 WuasJsonOutput: TypeAlias = 'dict[str, FloorData]'
 SpaceData: TypeAlias = 'str | ExpandedSpaceData'
@@ -35,6 +35,7 @@ class ExpandedSpaceData(TypedDict):
 class Token(TypedDict):
     object: str
     position: tuple[int, int]
+    span: NotRequired[tuple[int, int]]
 
 
 def render_to_json(config: ConfigFile, board: Board) -> WuasJsonOutput:
@@ -43,7 +44,7 @@ def render_to_json(config: ConfigFile, board: Board) -> WuasJsonOutput:
     result: WuasJsonOutput = {}
     for z, floor in board.floors.items():
         spaces = _render_spaces(config, floor)
-        tokens = _render_tokens(floor)
+        tokens = _render_tokens(config, floor)
         result[str(z)] = {'spaces': spaces, 'tokens': tokens}
     return result
 
@@ -78,18 +79,30 @@ def _determine_space_name(config: ConfigFile, current_space: Space) -> str:
         return current_space.space_name
 
 
-def _render_tokens(floor: Floor) -> list[Token]:
+def _render_tokens(config: ConfigFile, floor: Floor) -> list[Token]:
     tokens: list[Token] = []
     for x, y in floor.indices:
         current_space = floor.get_space(x, y)
         for token in current_space.get_concrete_tokens():
             object_name = token.item_name if token.item_name is not None else token.token_name
             dx, dy = token.position
-            tokens.append({
+            token_dict: Token = {
                 "object": object_name,
                 "position": (x * SPACE_WIDTH + dx, y * SPACE_HEIGHT + dy),
-            })
+            }
+            token_span = _get_token_span(config, token)
+            if token_span:
+                token_dict['span'] = token_span
+            tokens.append(token_dict)
     return tokens
+
+
+def _get_token_span(config: ConfigFile, token: ConcreteToken) -> tuple[int, int] | None:
+    if token.item_name is not None:
+        # Items do not currently support spans.
+        return None
+    token_data = config.definitions.get_token(token.token_name)
+    return token_data.span
 
 
 class JsonProducer(OutputProducer[NoArguments]):

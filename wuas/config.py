@@ -284,15 +284,24 @@ class TokenDefinition:
     stats: str
     thumbnail: tuple[int, int]
     desc: str
+    span: tuple[int, int] | None
 
     @classmethod
     def from_json_data(cls, json_data: Any) -> TokenDefinition:
         x, y = [int(coord) for coord in json_data['thumbnail']]
+
+        if 'span' in json_data:
+            spanx, spany = tuple(int(coord) for coord in json_data['span'])
+            span = (spanx, spany)
+        else:
+            span = None
+
         return cls(
             name=json_data['name'],
             stats=json_data['stats'],
             thumbnail=(x, y),
             desc=json_data['desc'],
+            span=span,
         )
 
     def is_player(self) -> bool:

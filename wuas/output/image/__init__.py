@@ -85,7 +85,8 @@ class Renderer:
             topleft_y = y * SPACE_HEIGHT
             for token in space.get_concrete_tokens():
                 token_data = self.config.definitions.get_token(token.token_name)
-                token_image = self.config.tokens_png.select(token_data.thumbnail)  # TODO Span
+                token_span = token_data.span or (1, 1)
+                token_image = self.config.tokens_png.select(token_data.thumbnail, span=token_span)
                 dx, dy = token.position
                 self.image.paste(token_image, (topleft_x + dx, topleft_y + dy), token_image)
 
