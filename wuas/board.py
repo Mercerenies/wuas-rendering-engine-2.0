@@ -358,6 +358,19 @@ class Space:
         # Then assign to the tile data
         self._tile_data.token_ids = list(sequence)
 
+    def append_token_id(self, new_token_id: str) -> None:
+        """Equivalent to the following, but faster since this avoids
+        allocating the intermediate list.
+
+        ```
+        tokens = list(self.token_ids)
+        tokens.append(new_token_id)
+        self.token_ids = tokens
+        ```
+        """
+        assert new_token_id in self._references
+        self._tile_data.token_ids.append(new_token_id)
+
     @property
     def attribute_ids(self) -> Sequence[str]:
         """The string abbreviations for the attributes on this space.

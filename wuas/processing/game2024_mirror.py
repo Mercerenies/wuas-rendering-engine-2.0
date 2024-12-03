@@ -28,10 +28,10 @@ _T = TypeVar("_T")
 
 
 @registered_processor(aliases=['mirror2024'])
-class MirrorWithPlayersProcessor(BoardProcessor):
+class MirrorWithPlayersProcessor(MirrorProcessor):
 
     def run(self, config: ConfigFile, board: Board) -> None:
-        MirrorProcessor().run(config, board)
+        super().run(config, board)
         altar_x, _, _ = _find_altar(board)
         tokens = list(_find_players(config, board))
         for player_token in tokens:
