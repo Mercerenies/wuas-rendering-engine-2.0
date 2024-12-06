@@ -21,6 +21,7 @@ class MirrorProcessor(BoardProcessor):
         for floor in board.floors.values():
             self._mirror_floor(floor)
             self._adjust_tokens(config, board, floor)
+        board.recompute_labels_map()
 
     def _mirror_floor(self, floor: Floor) -> None:
         width = floor.width
