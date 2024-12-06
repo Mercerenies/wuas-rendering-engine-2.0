@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import Iterator, Any, cast
+from typing import Iterator, Iterable, Any, cast, Callable, Optional
 import math
 from pathlib import Path
 import importlib
@@ -124,3 +124,10 @@ def _parse_dataclass_type(type_: str | type[object] | None) -> type[object]:
 
 def project_root() -> Path:
     return Path(__file__).parent.parent.parent
+
+
+def indexif[T](iterable: Iterable[T], pred: Callable[[T], bool]) -> Optional[int]:
+    for i, elem in enumerate(iterable):
+        if pred(elem):
+            return i
+    return None

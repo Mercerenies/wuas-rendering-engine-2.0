@@ -14,14 +14,13 @@ should that player warp to the new mirrored position.
 
 from __future__ import annotations
 
-from wuas.processing.abc import BoardProcessor
-from wuas.board import Board, ConcreteToken
+from wuas.board import Board, ConcreteToken, move_token
 from wuas.config import ConfigFile, normalize_space_name
 from wuas.processing.registry import registered_processor
 from wuas.processing.mirror import MirrorProcessor
 
 import sys
-from typing import Sequence, TypeVar, NamedTuple, Iterator
+from typing import TypeVar, NamedTuple, Iterator
 
 
 _T = TypeVar("_T")
@@ -48,7 +47,7 @@ def _find_players(config: ConfigFile, board: Board) -> Iterator[PlayerToken]:
         for token_id in board.get_space(x, y, z).token_ids:
             token = board.tokens[token_id]
             if isinstance(token, ConcreteToken) and config.definitions.get_token(token.token_name).is_player():
-                yield PlayerToken((x, y, z), token_id)
+                yield PlayerToken((x, y, z), token_id=token.token_name)
 
 
 def _find_altar(board: Board) -> tuple[int, int, int]:
@@ -66,34 +65,17 @@ def _try_to_move_back(
         token_id: str,
 ) -> None:
     # We just mirrored everything, including player tokens. Try to
-    # un-mirror this player token."""
-    token = board.tokens[token_id]
-    if not isinstance(token, ConcreteToken):
-        raise ValueError(f"Expected player token {token_id} to be a ConcreteToken")
-    token_name = token.token_name
+    # un-mirror this player token.
     x, y, z = pos
-    src_space = board.get_space(x, y, z)
     dest_x = (2 * altar_x - x) % board.width
     dest_space = board.get_space(dest_x, y, z)
     space_name = normalize_space_name(dest_space.space_name)
     if space_name != GAP_NAME and space_name not in config.meta.get('mirrorsolids', []):
         # Move the player back to the destination.
-        src_space.token_ids = _without(src_space.token_ids, token_id)
-        dest_space.token_ids = tuple(dest_space.token_ids) + (token_id,)
-        print(f"Mirror: Player {token_name} remained at the same X/Y coords", file=sys.stderr)
+        move_token(board, token_id, src=(x, y, z), dest=(dest_x, y, z))
+        print(f"Mirror: Player {token_id} remained at the same X/Y coords", file=sys.stderr)
     else:
-        print(f"Mirror: Player {token_name} moved with the board", file=sys.stderr)
-
-
-def _without(seq: Sequence[_T], value: _T) -> Sequence[_T]:
-    """Remove first instance of value in seq, without modifying the
-    original sequence. If value is not in seq, does nothing."""
-    seq = list(seq)
-    try:
-        seq.remove(value)
-    except ValueError:
-        pass
-    return seq
+        print(f"Mirror: Player {token_id} moved with the board", file=sys.stderr)
 
 
 ALTAR_NAME = 'altar'

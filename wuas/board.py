@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from wuas.config import normalize_space_name
 from wuas.graph import GraphEdge
+from wuas.util import indexif
 
 from dataclasses import dataclass
 from typing import Mapping, Sequence, Iterator, Union
@@ -145,6 +146,11 @@ class Board:
             if space.space_label:
                 result[space.space_label] = (x, y, z)
         return result
+
+    def recompute_labels_map(self) -> None:
+        """Clears the cache on labels_map. Should be called whenever
+        an effect moves a space that might have a label."""
+        del self.labels_map
 
 
 class Floor:
@@ -425,6 +431,10 @@ class ConcreteToken:
     # (x, y) relative to the top-left corner of the space.
     position: tuple[int, int]
 
+    @property
+    def name(self) -> str:
+        return self.token_name
+
 
 @dataclass(frozen=True)
 class HiddenToken:
@@ -465,3 +475,39 @@ class Attribute:
 
 class BoardIntegrityError(Exception):
     pass
+
+
+def move_token(
+        board: Board,
+        token_id: str,
+        src: tuple[int, int, int],
+        dest: tuple[int, int, int] | None,
+) -> None:
+    """Moves one instance of the token from the source to the
+    destination. Throws ValueError if no instances of that token exist
+    at that position.
+
+    If dest is None, then the token is removed from play rather than
+    being moved.
+
+    """
+    token_refs = [ref for ref, token in board.tokens.items() if token.name == token_id]
+    src_token_ids = list(board.get_space(*src).token_ids)
+    matching_index = indexif(src_token_ids, lambda ref: ref in token_refs)
+    if matching_index is None:
+        raise ValueError(f"No instances of token {token_id} at position {src}")
+    matching_id = src_token_ids[matching_index]
+    del src_token_ids[matching_index]
+    board.get_space(*src).token_ids = src_token_ids
+    if dest is not None:
+        board.get_space(*dest).append_token_id(matching_id)
+
+
+def delete_token(board: Board, token_id: str, src: tuple[int, int, int]) -> None:
+    """Removes one instance of the token from the source. Throws
+    ValueError if no instances of that token exist at that position.
+
+    Equivalent to move_token with a dest argument of None.
+
+    """
+    move_token(board, token_id, src, dest=None)
