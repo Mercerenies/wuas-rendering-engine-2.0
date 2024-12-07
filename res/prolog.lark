@@ -1,0 +1,25 @@
+
+%import common.WS
+
+start: horn_clause*
+
+horn_clause: expr "."
+           | expr ":-" expr ("," expr)* "."
+
+?expr: atom
+     | function_call
+     | list
+
+atom: NAME
+
+function_call: NAME "(" _arglist ")"
+
+list: "[" _arglist "]"
+
+_arglist: [expr ("," expr)*]
+
+NAME: /[a-z_]+/
+COMMENT: /%[^\n]*/
+
+%ignore COMMENT
+%ignore WS
