@@ -9,7 +9,7 @@ from wuas.graph import GraphEdge
 from wuas.util import indexif
 
 from dataclasses import dataclass
-from typing import Mapping, Sequence, Iterator, Union
+from typing import Mapping, Sequence, Iterator, Union, overload
 from functools import cached_property
 
 
@@ -68,10 +68,23 @@ class Board:
     def floors(self) -> Mapping[int, Floor]:
         return _FloorMapping(self._floors, self._references, self._attributes)
 
-    def get_space(self, x: int, y: int, z: int) -> Space:
+    @overload
+    def get_space(self, x: int, y: int, z: int, /) -> Space:
+        ...
+
+    @overload
+    def get_space(self, pos: tuple[int, int, int], /) -> Space:
+        ...
+
+    def get_space(self, x_or_pos: int | tuple[int, int, int], y: int | None = None, z: int | None = None, /) -> Space:
         """Return the space at the given position. This is a live view,
         so mutations to the returned Space object will affect this Board
         in real time. Raises IndexError if out of bounds."""
+        if isinstance(x_or_pos, tuple):
+            return self.get_space(*x_or_pos)
+        x = x_or_pos
+        assert isinstance(y, int)
+        assert isinstance(z, int)
         if self.in_bounds(x, y, z):
             return self.floors[z].get_space(x, y)
         else:
