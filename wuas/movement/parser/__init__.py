@@ -8,9 +8,16 @@ from typing import Iterable
 
 from wuas.board import Board
 from wuas.config import ConfigFile
-from .prolog import HornClause, Call, Atom
-from .turn import WuasTurn, TurnSegment, TurnKey, PlayerTurnKey, Global
-from .events import Event
+from wuas.movement.prolog import HornClause, Call
+from wuas.movement.turn import WuasTurn, TurnSegment, TurnKey, PlayerTurnKey, Global
+from wuas.movement.events import Event
+from .assertions import assert_atom
+from .error import ParseError
+
+
+__all__ = (
+    'WuasTurnParser', 'ParseError',
+)
 
 
 @define(eq=False, kw_only=True)
@@ -38,17 +45,6 @@ class WuasTurnParser:
 
     def _parse_expr(self, call: Call) -> Event:
         raise RuntimeError("Not implemented")  # TODO
-
-
-class ParseError(Exception):
-    """Error during parsing."""
-    pass
-
-
-def assert_atom(call: Call) -> Atom:
-    if call.args:
-        raise ParseError(f"Expected an atom, got call {call!r}")
-    return call.head
 
 
 def _assert_is_player(config: ConfigFile, token_id: str) -> None:

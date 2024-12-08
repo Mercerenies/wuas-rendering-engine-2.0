@@ -43,3 +43,18 @@ class SinglePlayerBoard:
         position."""
         move_token(self.board, token_id=self.player_id, src=self.player_pos, dest=pos)
         self._player_pos = pos
+
+    def move_player(self, delta: tuple[int, int, int]) -> tuple[int, int, int]:
+        """Moves the player targeted by this board by the indicated
+        amount."""
+        self.player_pos = _add_tuple3(self.player_pos, delta)
+        return self.player_pos
+
+
+# TODO: This should REALLY be a Vector3 (and corresponding Vector2)
+# class everywhere, rather than doing this nonsense.
+def _add_tuple3(a: tuple[int, int, int], b: tuple[int, int, int], /) -> tuple[int, int, int]:
+    """Adds two 3-tuples."""
+    ax, ay, az = a
+    bx, by, bz = b
+    return (ax + bx, ay + by, az + bz)
