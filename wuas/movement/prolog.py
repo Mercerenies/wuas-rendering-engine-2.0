@@ -27,7 +27,7 @@ class HornClause:
 
     """
     head: Call
-    conditions: tuple[Call, ...]
+    body: tuple[Call, ...]
 
 
 @dataclass(frozen=True)
@@ -67,8 +67,8 @@ class PrologLarkTransformer(Transformer):
         return tuple(items)
 
     def horn_clause(self, items: list[Call]) -> HornClause:
-        head, *conditions = items
-        return HornClause(head, tuple(conditions))
+        head, *body = items
+        return HornClause(head, tuple(body))
 
     def atom(self, items: list[Token]) -> Call:
         return Call(Atom(str(items[0])), ())
