@@ -1,11 +1,10 @@
 
 from __future__ import annotations
 
-# from .prolog import HornClause, Call
 from .logs import MessageLogger
 from .singleplayer import SinglePlayerBoard
 from .names import ObjectNamer
-from .parser.direction import Direction
+from .direction import Direction
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -85,10 +84,11 @@ class UserInputEvent(Event):
     def execute(self, state: EventState) -> None:
         player_name = state.namer.get_player_name(state.board.player_id)
         original_inputs = ', '.join([d.name for d in self._inputs])
-        message = f"{player_name} attempts to move: {original_inputs}"
+        message = f"{player_name} attempts to move: {original_inputs}."
         if state.meta[CONTROLS_REVERSED_KEY]:
             reversed_inputs = ', '.join([d.opposite().name for d in self._inputs])
             message += f" Because controls are reversed, this is interpreted as: {reversed_inputs}."
+        state.logger.log(message)
 
 
 @define(eq=False)
@@ -98,7 +98,7 @@ class MovementEvent(Event):
 
     def message(self, player_name: str, space_name: str) -> str:
         if self._custom_message is None:
-            return f"{player_name} moved **{self.direction.name}**, onto **{space_name}**."
+            return f"{player_name} moves **{self.direction.name}**, onto **{space_name}**."
         else:
             return self._custom_message(player_name=player_name, space_name=space_name)
 
@@ -112,7 +112,7 @@ class MovementEvent(Event):
     @classmethod
     def by_gravity(cls, direction: Direction = Direction.DOWN):
         def _message(*, player_name: str, space_name: str) -> str:
-            return f"{player_name} fell **{direction.name}** due to gravity, onto **{space_name}**."
+            return f"{player_name} falls **{direction.name}** due to gravity, onto **{space_name}**."
         return cls(direction=direction, custom_message=_message)
 
 

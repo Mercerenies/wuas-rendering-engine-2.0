@@ -2,8 +2,8 @@
 from __future__ import annotations
 
 from wuas.movement.prolog import Call, Atom
+from wuas.movement.direction import Direction
 from .error import ParseError
-from .direction import Direction
 
 
 def assert_atom(call: Call) -> Atom:
