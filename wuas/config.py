@@ -9,7 +9,7 @@ from wuas.constants import Layer
 from PIL import Image
 
 import json
-from typing import Any, Literal, cast
+from typing import Any, Literal, cast, Iterable
 from dataclasses import dataclass
 from functools import cached_property
 
@@ -190,6 +190,15 @@ class DefinitionsFile:
         """Returns the token with the given name, raising KeyError if it doesn't
         exist."""
         return TokenDefinition.from_json_data(self._json_data['tokens'][key])
+
+    def all_tokens(self) -> Iterable[tuple[str, TokenDefinition]]:
+        for key, value in self._json_data['tokens'].items():
+            yield key, TokenDefinition.from_json_data(value)
+
+    def all_players(self) -> Iterable[tuple[str, TokenDefinition]]:
+        for key, value in self.all_tokens():
+            if value.is_player():
+                yield key, value
 
 
 @dataclass(frozen=True)
