@@ -76,4 +76,4 @@ class Global:
         return True
 
 
-Global._INSTANCE = Global()
+Global._INSTANCE = object.__new__(Global)
