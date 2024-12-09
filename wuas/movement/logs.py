@@ -4,10 +4,12 @@
 from __future__ import annotations
 
 from typing import Sequence
+from attrs import define, field
 
 
+@define(eq=False)
 class MessageLogger:
-    _messages: list[str]
+    _messages: list[str] = field(factory=list)
 
     def log(self, message: str) -> None:
         """Log a message."""
