@@ -7,13 +7,14 @@ from wuas.validator import validate
 from wuas.config import ConfigFile
 from wuas.args import parse_and_interpret_args
 
-args = parse_and_interpret_args()
-config = ConfigFile.from_json(args.config_filename)
-board = load_from_file(args.input_filename)
-if args.validate:
-    validate(config, board)
+if __name__ == "__main__":
+    args = parse_and_interpret_args()
+    config = ConfigFile.from_json(args.config_filename)
+    board = load_from_file(args.input_filename)
+    if args.validate:
+        validate(config, board)
 
-for processor in args.board_processors:
-    processor.run(config, board)
+    for processor in args.board_processors:
+        processor.run(config, board)
 
-args.output_producer.produce_output_checked(config, board, args.original_args)
+    args.output_producer.produce_output_checked(config, board, args.original_args)
