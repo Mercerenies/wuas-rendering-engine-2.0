@@ -1,7 +1,9 @@
 
 from __future__ import annotations
 
-from wuas.board import Board, move_token
+from wuas.board import Board, move_token, Space
+from contextlib import contextmanager
+from typing import Iterator
 
 
 class SinglePlayerBoard:
@@ -10,7 +12,9 @@ class SinglePlayerBoard:
     Invariant: The player targeted by this board must only be moved
     through the methods defined on this class. Other modifications may
     be made to the board through the Board class, provided that those
-    modifications do not move this particular player.
+    modifications do not move this particular player. To move the
+    player while this object exists, use a `board.moving_player`
+    block.
 
     """
     board: Board
@@ -46,11 +50,27 @@ class SinglePlayerBoard:
         move_token(self.board, token_id=self.player_id, src=self.player_pos, dest=pos)
         self._player_pos = pos
 
+    @property
+    def player_space(self) -> Space:
+        return self.board.get_space(self.player_pos)
+
     def move_player(self, delta: tuple[int, int, int]) -> tuple[int, int, int]:
         """Moves the player targeted by this board by the indicated
         amount."""
         self.player_pos = _add_tuple3(self.player_pos, delta)
         return self.player_pos
+
+    def _refresh_player_pos(self) -> None:
+        self._player_pos = _find_player(self.board, self.player_id)
+
+    @contextmanager
+    def moving_player(self) -> Iterator[Board]:
+        """Allows any modifications to the board within the block,
+        including those which might move the player."""
+        try:
+            yield self.board
+        finally:
+            self._refresh_player_pos()
 
 
 # TODO: This should REALLY be a Vector3 (and corresponding Vector2)

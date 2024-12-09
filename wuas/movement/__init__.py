@@ -33,6 +33,7 @@ class WuasTurnEvaluator:
         state = EventState(
             logger=logger,
             board=local_board,
+            config=self._config,
             namer=self.namer,
         )
         for event in turn.filtered_events(player_id=player_id):

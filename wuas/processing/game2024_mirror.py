@@ -20,21 +20,45 @@ from wuas.processing.registry import registered_processor
 from wuas.processing.mirror import MirrorProcessor
 
 import sys
-from typing import TypeVar, NamedTuple, Iterator
-
-
-_T = TypeVar("_T")
+from typing import NamedTuple, Iterator
+from dataclasses import dataclass
 
 
 @registered_processor(aliases=['mirror2024'])
 class MirrorWithPlayersProcessor(MirrorProcessor):
-
     def run(self, config: ConfigFile, board: Board) -> None:
+        summary = self.run_with_summary(config, board)
+        for explanation in summary:
+            print(explanation.simple_message(), file=sys.stderr)
+
+    def run_with_summary(self, config: ConfigFile, board: Board) -> list[MovementExplanation]:
         super().run(config, board)
         altar_x, _, _ = _find_altar(board)
         tokens = list(_find_players(config, board))
+        explanations = []
         for player_token in tokens:
-            _try_to_move_back(config, board, altar_x, player_token.pos, player_token.token_id)
+            explanation = _try_to_move_back(
+                config=config,
+                board=board,
+                altar_x=altar_x,
+                pos=player_token.pos,
+                token_id=player_token.token_id,
+            )
+            explanations.append(explanation)
+        return explanations
+
+
+@dataclass(frozen=True)
+class MovementExplanation:
+    player_id: str
+    moved_with_board: bool
+    space_at_original_coords: str
+
+    def simple_message(self) -> str:
+        if self.moved_with_board:
+            return f"Player {self.player_id} moved with the board"
+        else:
+            return f"Player {self.player_id} remained at the same X/Y coords"
 
 
 class PlayerToken(NamedTuple):
@@ -63,7 +87,7 @@ def _try_to_move_back(
         altar_x: int,
         pos: tuple[int, int, int],
         token_id: str,
-) -> None:
+) -> MovementExplanation:
     # We just mirrored everything, including player tokens. Try to
     # un-mirror this player token.
     x, y, z = pos
@@ -73,9 +97,14 @@ def _try_to_move_back(
     if space_name != GAP_NAME and space_name not in config.meta.get('mirrorsolids', []):
         # Move the player back to the destination.
         move_token(board, token_id, src=(x, y, z), dest=(dest_x, y, z))
-        print(f"Mirror: Player {token_id} remained at the same X/Y coords", file=sys.stderr)
+        moved_with_board = False
     else:
-        print(f"Mirror: Player {token_id} moved with the board", file=sys.stderr)
+        moved_with_board = True
+    return MovementExplanation(
+        player_id=token_id,
+        moved_with_board=moved_with_board,
+        space_at_original_coords=space_name,
+    )
 
 
 ALTAR_NAME = 'altar'
