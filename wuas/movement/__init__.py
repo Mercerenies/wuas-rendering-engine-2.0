@@ -9,6 +9,7 @@ from wuas.config import ConfigFile
 from wuas.board import Board
 
 from attrs import define
+from copy import deepcopy
 
 
 __all__ = (
@@ -25,7 +26,7 @@ class WuasTurnEvaluator:
 
     def evaluate_turn(self, turn: WuasTurn, player_id: str) -> list[str]:
         local_board = SinglePlayerBoard(
-            board=self._board,
+            board=deepcopy(self._board),
             player_id=player_id,
         )
         logger = MessageLogger()
