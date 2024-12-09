@@ -8,7 +8,7 @@ from typing import Iterable
 
 from wuas.board import Board
 from wuas.config import ConfigFile
-from wuas.movement.prolog import parse_prolog, HornClause, Call
+from wuas.movement.prolog import parse_prolog, HornClause, Call, Atom
 from wuas.movement.turn import WuasTurn, TurnSegment, TurnKey, PlayerTurnKey, Global
 from wuas.movement.events import Event
 from wuas.movement.direction import Direction
@@ -69,7 +69,7 @@ class WuasTurnParser:
         try:
             atom = assert_atom(call)
             if atom in Direction:
-                return Call("go", (call,))
+                return Call(Atom("go"), (call,))
         except ParseError:
             pass
         return call

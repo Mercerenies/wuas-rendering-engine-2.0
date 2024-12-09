@@ -14,16 +14,18 @@ class SinglePlayerBoard:
 
     """
     board: Board
-    _player_pos: tuple[int, int, int]
     player_id: str
+    _player_pos: tuple[int, int, int]
 
-    def __init__(self, board: Board, player_pos: tuple[int, int, int], player_id: str) -> None:
+    def __init__(self, board: Board, player_id: str, player_pos: tuple[int, int, int] | None = None) -> None:
         """Constructs a SinglePlayerBoard by zooming in on a
         particular player of a Board object. If the target player is
         not at the indicated position, then this constructor raises
         ValueError.
 
         """
+        if not player_pos:
+            player_pos = _find_player(board, player_id)
         self.board = board
         self._player_pos = player_pos
         self.player_id = player_id
@@ -58,3 +60,11 @@ def _add_tuple3(a: tuple[int, int, int], b: tuple[int, int, int], /) -> tuple[in
     ax, ay, az = a
     bx, by, bz = b
     return (ax + bx, ay + by, az + bz)
+
+
+def _find_player(board: Board, player_id: str) -> tuple[int, int, int]:
+    for pos in board.indices:
+        space = board.get_space(pos)
+        if any(tok.name == player_id for tok in space.get_tokens()):
+            return pos
+    raise ValueError(f"Player {player_id} not found in board")
