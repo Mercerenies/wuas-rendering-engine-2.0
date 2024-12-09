@@ -92,6 +92,19 @@ class UserInputEvent(Event):
 
 
 @define(eq=False)
+class TurnStartEvent(Event):
+
+    def message(self, player_name: str, space_name: str) -> str:
+        return f"{player_name} begins their turn on **{space_name}**."
+
+    def execute(self, state: EventState) -> None:
+        player_name = state.namer.get_player_name(state.board.player_id)
+        player_pos = state.board.player_pos
+        space_name = state.namer.get_space_name(state.board.board.get_space(player_pos).space_name)
+        state.logger.log(self.message(player_name=player_name, space_name=space_name))
+
+
+@define(eq=False)
 class MovementEvent(Event):
     direction: Direction
     _custom_message: MovementEventCustomMessage | None = None

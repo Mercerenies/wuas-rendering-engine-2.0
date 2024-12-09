@@ -96,4 +96,5 @@ BUILT_IN_FUNCTIONS = {
     "take_lakitu_cloud": Arity0Function.const(events.SimpleMessage(_lakitu_cloud_message)),
     "mirror_board": Arity0Function.const(events.MirrorBoardEvent()),
     "cannot_move": cannot_move_function(),
+    "start_turn": Arity0Function.const(events.TurnStartEvent()),
 }
