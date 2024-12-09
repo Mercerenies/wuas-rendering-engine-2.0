@@ -68,12 +68,15 @@ def _lakitu_cloud_message(player_name: str) -> str:
 class CannotMoveReason(Enum):
     WATER = 'water'
     GAP = 'gap'
+    GRAVITY = 'gravity'
 
     def message(self, player_name: str) -> str:
         if self == CannotMoveReason.WATER:
             return f"{player_name} cannot proceed because they are in water."
         elif self == CannotMoveReason.GAP:
             return f"{player_name} cannot proceed because there is an empty gap in the way."
+        elif self == CannotMoveReason.GRAVITY:
+            return f"{player_name} cannot proceed because they want to jump, but there's no floor for them to jump off of."
 
 
 def cannot_move_function() -> Function:
