@@ -163,7 +163,11 @@ class Board:
     def recompute_labels_map(self) -> None:
         """Clears the cache on labels_map. Should be called whenever
         an effect moves a space that might have a label."""
-        del self.labels_map
+        try:
+            del self.labels_map
+        except AttributeError:
+            # Has not been initialized yet, so nothing to do.
+            pass
 
 
 class Floor:
