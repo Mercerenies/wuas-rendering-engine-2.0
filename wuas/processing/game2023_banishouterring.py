@@ -5,12 +5,17 @@ from __future__ import annotations
 
 from wuas.processing.abc import BoardProcessor
 from wuas.board import Board
+from wuas.floornumber import FloorNumber
 from wuas.config import ConfigFile
 from wuas.processing.registry import registered_processor
 
 import random
 
-MCOTW = (-100, -101, -102)
+MCOTW = (
+    FloorNumber(-100),
+    FloorNumber(-101),
+    FloorNumber(-102),
+)
 
 
 @registered_processor
@@ -28,5 +33,5 @@ class BanishOuterRingProcessor(BoardProcessor):
 
     def _migrate(self, board: Board, x: int, y: int) -> None:
         new_z = random.choice(MCOTW)
-        board.get_space(x, y, 0).space_name = "ash"
+        board.get_space(x, y, FloorNumber(0)).space_name = "ash"
         board.get_space(x, y, new_z).space_name = "fire"

@@ -7,6 +7,7 @@ from __future__ import annotations
 from wuas.config import normalize_space_name
 from wuas.graph import GraphEdge
 from wuas.util import indexif
+from wuas.floornumber import FloorNumber
 
 from dataclasses import dataclass
 from typing import Mapping, Sequence, Iterator, Union, overload
@@ -20,7 +21,7 @@ class Board:
 
     Invariant: All floors have the same width and height."""
 
-    _floors: dict[int, list[list[TileData]]]
+    _floors: dict[FloorNumber, list[list[TileData]]]
     _references: dict[str, Token]
     _attributes: dict[str, Attribute]
     # Meta data, included after the version number as a set of
@@ -31,7 +32,7 @@ class Board:
 
     # TODO I don't like the complex type of floor_map
     def __init__(self,
-                 floor_map: dict[int, list[list[TileData]]],
+                 floor_map: dict[FloorNumber, list[list[TileData]]],
                  references: dict[str, Token],
                  attributes: dict[str, Attribute],
                  meta: dict[str, str],
@@ -65,18 +66,24 @@ class Board:
         return self._attributes
 
     @property
-    def floors(self) -> Mapping[int, Floor]:
+    def floors(self) -> Mapping[FloorNumber, Floor]:
         return _FloorMapping(self._floors, self._references, self._attributes)
 
     @overload
-    def get_space(self, x: int, y: int, z: int, /) -> Space:
+    def get_space(self, x: int, y: int, z: FloorNumber, /) -> Space:
         ...
 
     @overload
-    def get_space(self, pos: tuple[int, int, int], /) -> Space:
+    def get_space(self, pos: tuple[int, int, FloorNumber], /) -> Space:
         ...
 
-    def get_space(self, x_or_pos: int | tuple[int, int, int], y: int | None = None, z: int | None = None, /) -> Space:
+    def get_space(
+            self,
+            x_or_pos: int | tuple[int, int, FloorNumber],
+            y: int | None = None,
+            z: FloorNumber | None = None,
+            /,
+    ) -> Space:
         """Return the space at the given position. This is a live view,
         so mutations to the returned Space object will affect this Board
         in real time. Raises IndexError if out of bounds."""
@@ -84,14 +91,14 @@ class Board:
             return self.get_space(*x_or_pos)
         x = x_or_pos
         assert isinstance(y, int)
-        assert isinstance(z, int)
+        assert isinstance(z, FloorNumber)
         if self.in_bounds(x, y, z):
             return self.floors[z].get_space(x, y)
         else:
             raise IndexError(f"Position {(x, y, z)} out of bounds in board of size {(self.width, self.height)}")
 
     @property
-    def indices(self) -> Iterator[tuple[int, int, int]]:
+    def indices(self) -> Iterator[tuple[int, int, FloorNumber]]:
         for z, floor in sorted(self.floors.items(), key=lambda x: x[0]):
             for x, y in floor.indices:
                 yield x, y, z
@@ -123,7 +130,7 @@ class Board:
         for floor in self.floors.values():
             floor.resize_unsafe(new_left, new_top, new_right, new_bottom, initial_value)
 
-    def in_bounds(self, x: int, y: int, z: int) -> bool:
+    def in_bounds(self, x: int, y: int, z: FloorNumber) -> bool:
         """Returns whether or not the given 0-based position in within
         the board's current bounds."""
         if z not in self._floors:
@@ -151,7 +158,7 @@ class Board:
         return self._graph_edges
 
     @cached_property
-    def labels_map(self) -> Mapping[str, tuple[int, int, int]]:
+    def labels_map(self) -> Mapping[str, tuple[int, int, FloorNumber]]:
         """A mapping from space labels to their 0-based coordinates."""
         result = {}
         for x, y, z in self.indices:
@@ -290,24 +297,24 @@ class TileMapping:
         return self._floor.height * self._floor.width
 
 
-class _FloorMapping(Mapping[int, Floor]):
-    _floors: dict[int, list[list[TileData]]]
+class _FloorMapping(Mapping[FloorNumber, Floor]):
+    _floors: dict[FloorNumber, list[list[TileData]]]
     _references: dict[str, Token]
     _attributes: dict[str, Attribute]
 
     def __init__(self,
-                 floors: dict[int, list[list[TileData]]],
+                 floors: dict[FloorNumber, list[list[TileData]]],
                  references: dict[str, Token],
                  attributes: dict[str, Attribute]) -> None:
         self._floors = floors
         self._references = references
         self._attributes = attributes
 
-    def __getitem__(self, floor_index: int) -> Floor:
+    def __getitem__(self, floor_index: FloorNumber) -> Floor:
         tile_grid = self._floors[floor_index]
         return Floor(tile_grid, self._references, self._attributes)
 
-    def __iter__(self) -> Iterator[int]:
+    def __iter__(self) -> Iterator[FloorNumber]:
         return iter(self._floors)
 
     def __len__(self) -> int:
@@ -497,8 +504,8 @@ class BoardIntegrityError(Exception):
 def move_token(
         board: Board,
         token_id: str,
-        src: tuple[int, int, int],
-        dest: tuple[int, int, int] | None,
+        src: tuple[int, int, FloorNumber],
+        dest: tuple[int, int, FloorNumber] | None,
 ) -> None:
     """Moves one instance of the token from the source to the
     destination. Throws ValueError if no instances of that token exist
@@ -520,7 +527,7 @@ def move_token(
         board.get_space(*dest).append_token_id(matching_id)
 
 
-def delete_token(board: Board, token_id: str, src: tuple[int, int, int]) -> None:
+def delete_token(board: Board, token_id: str, src: tuple[int, int, FloorNumber]) -> None:
     """Removes one instance of the token from the source. Throws
     ValueError if no instances of that token exist at that position.
 

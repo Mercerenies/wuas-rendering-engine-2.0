@@ -1,6 +1,8 @@
 
 from __future__ import annotations
 
+from wuas.floornumber import FloorNumber
+
 from enum import Enum
 
 
@@ -22,8 +24,8 @@ class Direction(Enum):
         elif self == Direction.DOWN:
             return 0, 1
 
-    def as_tuple3(self) -> tuple[int, int, int]:
-        return self.as_tuple2() + (0,)
+    def as_tuple3(self) -> tuple[int, int, FloorNumber]:
+        return self.as_tuple2() + (FloorNumber(0),)
 
     def opposite(self) -> Direction:
         if self == Direction.UP:

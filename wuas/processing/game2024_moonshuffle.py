@@ -7,6 +7,7 @@ from __future__ import annotations
 from wuas.config import ConfigFile
 from wuas.processing.abc import BoardProcessor
 from wuas.board import Board, Token, HiddenToken, move_token
+from wuas.floornumber import FloorNumber
 from wuas.processing.registry import registered_processor
 
 from dataclasses import dataclass
@@ -39,7 +40,7 @@ class MoonShuffleProcessor(BoardProcessor):
 
 @dataclass(frozen=True)
 class TargetToken:
-    source_pos: tuple[int, int, int]
+    source_pos: tuple[int, int, FloorNumber]
     token_id: str
 
 
@@ -62,7 +63,7 @@ def _is_valid_target(config: ConfigFile, token: Token) -> bool:
     return not token_definition.is_player()
 
 
-def _get_valid_destinations(board: Board) -> list[tuple[int, int, int]]:
+def _get_valid_destinations(board: Board) -> list[tuple[int, int, FloorNumber]]:
     positions = []
     for pos in board.indices:
         tile = board.get_space(pos)

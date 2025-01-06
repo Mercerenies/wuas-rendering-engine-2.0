@@ -6,6 +6,7 @@ from __future__ import annotations
 from wuas.config import ConfigFile
 from wuas.processing.abc import BoardProcessor
 from wuas.board import Board, Space, delete_token, move_token
+from wuas.floornumber import FloorNumber
 from wuas.processing.registry import registered_processor
 
 from typing import Callable, ClassVar, Optional
@@ -34,7 +35,7 @@ class BalloonMoveProcessor(BoardProcessor):
         self.config = config
 
     def run(self, config: ConfigFile, board: Board) -> None:
-        _already_moved_balloons: Counter[tuple[int, int, int]] = Counter()
+        _already_moved_balloons: Counter[tuple[int, int, FloorNumber]] = Counter()
         for x, y, z in board.indices:
             tile = board.get_space(x, y, z)
             balloon_count = self._count_balloons(tile) - _already_moved_balloons[(x, y, z)]
@@ -50,7 +51,10 @@ class BalloonMoveProcessor(BoardProcessor):
                 count += 1
         return count
 
-    def _move_balloon(self, board: Board, src: tuple[int, int, int]) -> Optional[tuple[int, int, int]]:
+    def _move_balloon(
+            self,
+            board: Board, src: tuple[int, int, FloorNumber],
+    ) -> Optional[tuple[int, int, FloorNumber]]:
         x, y, z = src
         dest_y = y - self.config.move_speed()
         if dest_y < 0:

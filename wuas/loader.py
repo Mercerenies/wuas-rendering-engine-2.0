@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from wuas.board import Board, TileData, Token, Attribute, HiddenToken, ConcreteToken
+from wuas.floornumber import FloorNumber
 from wuas.graph import GraphEdge
 
 from typing import TextIO, NamedTuple
@@ -53,14 +54,16 @@ def load_from_io(io: TextIO) -> Board:
     return Board(floors, token_data, attr_data, meta, graph_data)
 
 
-def _read_floors(io: TextIO, version: int) -> dict[int, list[list[TileData]]]:
+def _read_floors(io: TextIO, version: int) -> dict[FloorNumber, list[list[TileData]]]:
     if version < 3:
         # Versions 1 and 2 don't have floors, so put everything on floor 0.
         board_table = _read_board(io, version)
-        return {0: board_table}
+        return {
+            FloorNumber(0): board_table,
+        }
     else:
         # The floors of the board
-        floors: dict[int, list[list[TileData]]] = {}
+        floors: dict[FloorNumber, list[list[TileData]]] = {}
         while True:
             header_line = io.readline()
             if header_line == '\n':
@@ -68,7 +71,7 @@ def _read_floors(io: TextIO, version: int) -> dict[int, list[list[TileData]]]:
                 return floors
             if not header_line.startswith("floor="):
                 raise RuntimeError(f"Expecting floor number, got '{header_line}'")
-            floor_number = int(header_line[6:])
+            floor_number = FloorNumber.parse(header_line[6:])
             if floor_number in floors:
                 raise RuntimeError(f"Duplicate floor {floor_number}")
             board_table = _read_board(io, version)

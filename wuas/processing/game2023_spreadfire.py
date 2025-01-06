@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from wuas.processing.abc import BoardProcessor
 from wuas.board import Board, Space, Attribute
+from wuas.floornumber import FloorNumber
 from wuas.config import ConfigFile
 from wuas.processing.registry import registered_processor
 from wuas.util import manhattan_circle
@@ -15,7 +16,11 @@ import random
 # I'm not going to pretend this fits into some .json configuration data. I'm
 # special-casing the rules.
 
-MCOTW = (-100, -101, -102)
+MCOTW = (
+    FloorNumber(-100),
+    FloorNumber(-101),
+    FloorNumber(-102),
+)
 
 INTRINSICALLY_FIREPROOF = ('start', 'altar', 'water', 'twater', 'ttree')
 
@@ -35,13 +40,13 @@ class FireSpreadProcessor(BoardProcessor):
                 _banish(board, x, y, z)
 
 
-def _find_fire_spaces(board: Board) -> Iterable[tuple[int, int, int]]:
+def _find_fire_spaces(board: Board) -> Iterable[tuple[int, int, FloorNumber]]:
     for x, y, z in board.indices:
         if board.get_space(x, y, z).space_name == 'fire':
             yield x, y, z
 
 
-def _do_fire_spread(board: Board, fire_space: tuple[int, int, int]) -> None:
+def _do_fire_spread(board: Board, fire_space: tuple[int, int, FloorNumber]) -> None:
     distance = 2 if _is_super_fire_space(board, fire_space) else 1
     for x, y, z in manhattan_circle(fire_space, distance):
         if not board.in_bounds(x, y, z):
@@ -51,7 +56,7 @@ def _do_fire_spread(board: Board, fire_space: tuple[int, int, int]) -> None:
             space.space_name = 'fire'
 
 
-def _is_super_fire_space(board: Board, fire_space: tuple[int, int, int]) -> bool:
+def _is_super_fire_space(board: Board, fire_space: tuple[int, int, FloorNumber]) -> bool:
     adjacent_spaces = [
         board.get_space(x, y, z).space_name
         for x, y, z in manhattan_circle(fire_space, 1)
@@ -75,7 +80,7 @@ def _is_fireproof(space: Space) -> bool:
     return False
 
 
-def _banish(board: Board, x: int, y: int, z: int) -> None:
+def _banish(board: Board, x: int, y: int, z: FloorNumber) -> None:
     new_z_choices = [
         floor
         for floor in MCOTW

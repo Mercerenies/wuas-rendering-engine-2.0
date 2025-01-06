@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from wuas.processing.lighting.source import LightSourceSupplier
 from wuas.board import Board, Token, Space, HiddenToken
+from wuas.floornumber import FloorNumber
 
 from dataclasses import dataclass
 from typing import Any
@@ -53,7 +54,7 @@ class ConfigLightSourceSupplier(LightSourceSupplier):
         self._config = config
         self._board = board
 
-    def get_light_source(self, position: tuple[int, int, int]) -> int:
+    def get_light_source(self, position: tuple[int, int, FloorNumber]) -> int:
         x, y, z = position
         space = self._board.get_space(x, y, z)
         lights = [self.token_light(token) for token in space.get_tokens()]

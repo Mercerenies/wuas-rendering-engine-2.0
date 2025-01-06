@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from wuas.util import draw_dotted_line
 from wuas.board import Board, Floor, Space
+from wuas.floornumber import FloorNumber
 from wuas.constants import SPACE_WIDTH, SPACE_HEIGHT, Layer
 from wuas.config import ConfigFile, find_matching_for_layer
 from wuas.output.abc import OutputProducer
@@ -32,11 +33,11 @@ class Renderer:
 
     config: ConfigFile
     board: Board
-    floor_number: int
+    floor_number: FloorNumber
     floor: Floor
     image: Image.Image
 
-    def __init__(self, config: ConfigFile, board: Board, floor_number: int, floor: Floor) -> None:
+    def __init__(self, config: ConfigFile, board: Board, floor_number: FloorNumber, floor: Floor) -> None:
         self.config = config
         self.floor_number = floor_number
         self.floor = floor
@@ -135,7 +136,7 @@ class Renderer:
         return self.image
 
 
-def render_image(config: ConfigFile, board: Board, floor_number: int, floor: Floor) -> Image.Image:
+def render_image(config: ConfigFile, board: Board, floor_number: FloorNumber, floor: Floor) -> Image.Image:
     """Render the floor to an image file by drawing the layers in
     order."""
     renderer = Renderer(config, board, floor_number, floor)
@@ -146,7 +147,7 @@ def render_image(config: ConfigFile, board: Board, floor_number: int, floor: Flo
 
 @dataclass(frozen=True, kw_only=True)
 class ImageProducerArgs:
-    floor_number: int
+    floor_number: FloorNumber
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -164,7 +165,7 @@ class DisplayedImageProducer(OutputProducer[ImageProducerArgs]):
         image.show()
 
     def init_subparser(self, subparser: argparse.ArgumentParser) -> None:
-        subparser.add_argument('-F', '--floor-number', type=int, required=True)
+        subparser.add_argument('-F', '--floor-number', type=FloorNumber, required=True)
 
 
 @registered_producer(aliases=["save-image"])

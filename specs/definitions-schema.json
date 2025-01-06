@@ -114,7 +114,7 @@
         "^\\d+$": {
           "type": "object",
           "patternProperties": {
-            "^-?\\d+$": {
+            "^(-?\\d+|∞)$": {
               "type": "object",
               "properties": {
                 "spaces": {

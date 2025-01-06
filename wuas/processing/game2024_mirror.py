@@ -15,6 +15,7 @@ should that player warp to the new mirrored position.
 from __future__ import annotations
 
 from wuas.board import Board, ConcreteToken, move_token
+from wuas.floornumber import FloorNumber
 from wuas.config import ConfigFile, normalize_space_name
 from wuas.processing.registry import registered_processor
 from wuas.processing.mirror import MirrorProcessor
@@ -62,7 +63,7 @@ class MovementExplanation:
 
 
 class PlayerToken(NamedTuple):
-    pos: tuple[int, int, int]
+    pos: tuple[int, int, FloorNumber]
     token_id: str
 
 
@@ -74,7 +75,7 @@ def _find_players(config: ConfigFile, board: Board) -> Iterator[PlayerToken]:
                 yield PlayerToken((x, y, z), token_id=token.token_name)
 
 
-def _find_altar(board: Board) -> tuple[int, int, int]:
+def _find_altar(board: Board) -> tuple[int, int, FloorNumber]:
     for x, y, z in board.indices:
         if board.get_space(x, y, z).space_name == ALTAR_NAME:
             return x, y, z
@@ -85,7 +86,7 @@ def _try_to_move_back(
         config: ConfigFile,
         board: Board,
         altar_x: int,
-        pos: tuple[int, int, int],
+        pos: tuple[int, int, FloorNumber],
         token_id: str,
 ) -> MovementExplanation:
     # We just mirrored everything, including player tokens. Try to

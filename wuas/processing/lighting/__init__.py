@@ -11,6 +11,7 @@ from wuas.processing.lighting.source import LightSourceSupplier
 from wuas.processing.abc import BoardProcessor
 from wuas.processing.registry import registered_processor
 from wuas.board import Board
+from wuas.floornumber import FloorNumber
 from wuas.config import ConfigFile
 from wuas.util import lerp, manhattan_circle
 
@@ -64,23 +65,27 @@ class LightingEngine:
                         if target_space.space_name == adjacency_rule:
                             self._do_light_emission((x1, y1, z1), self._lighting_grid[x0, y0, z0] - 1)
 
-    def _do_light_emission(self, position: tuple[int, int, int], power: int) -> None:
+    def _do_light_emission(self, position: tuple[int, int, FloorNumber], power: int) -> None:
         for distance in range(power):
             for x, y, z in manhattan_circle(position, distance):
                 if self._board.in_bounds(x, y, z):
                     # Check if anything diminishes the light
                     dampened_light_level = power - distance
-                    for x1, y1, z1 in _get_intersected_spaces(position, (x, y, z)):
-                        if (x1, y1, z1) == (x, y, z):
-                            # A dampening object will never dampen its own space.
-                            continue
-                        if not self._board.in_bounds(x, y, z):
-                            # The board isn't convex anymore, since
-                            # floors is a sparse array.
-                            continue
-                        space_name = self._board.get_space(x1, y1, z1).space_name
-                        dampen_factor = self._lighting_config.diminishing.get(space_name, 0)
-                        dampened_light_level -= dampen_factor
+                    if not z.is_infinite() and not position[2].is_infinite():
+                        x0, y0, z0 = position
+                        # At infinity, the concept of distance is
+                        # meaningless, so don't try to compute it.
+                        for x1, y1, z1 in _get_intersected_spaces((x0, y0, z0.as_integer()), (x, y, z.as_integer())):
+                            if (x1, y1, z1) == (x, y, z):
+                                # A dampening object will never dampen its own space.
+                                continue
+                            if not self._board.in_bounds(x, y, z):
+                                # The board isn't convex anymore, since
+                                # floors is a sparse array.
+                                continue
+                            space_name = self._board.get_space(x1, y1, FloorNumber(z1)).space_name
+                            dampen_factor = self._lighting_config.diminishing.get(space_name, 0)
+                            dampened_light_level -= dampen_factor
                     self._lighting_grid.update((x, y, z), dampened_light_level)
 
     def darken_board(self) -> None:
@@ -98,11 +103,11 @@ class LightingGrid:
     used to run a lighting loop until a steady state is reached."""
 
     is_dirty: bool
-    _grid: dict[int, list[list[int]]]
+    _grid: dict[FloorNumber, list[list[int]]]
     _width: int
     _height: int
 
-    def __init__(self, width: int, height: int, floors: Iterable[int]) -> None:
+    def __init__(self, width: int, height: int, floors: Iterable[FloorNumber]) -> None:
         """Constructs a lighting grid of the given width and height
         where all values are initially zero."""
         self.is_dirty = False
@@ -110,13 +115,13 @@ class LightingGrid:
         for floor in floors:
             self._grid[floor] = [[0] * width for _ in range(height)]
 
-    def __getitem__(self, index: tuple[int, int, int]) -> int:
+    def __getitem__(self, index: tuple[int, int, FloorNumber]) -> int:
         """Get the light at the given position. Raises KeyError if out
         of bounds."""
         x, y, z = index
         return self._grid[z][y][x]
 
-    def update(self, index: tuple[int, int, int], new_light: int) -> None:
+    def update(self, index: tuple[int, int, FloorNumber], new_light: int) -> None:
         """Set the light level at the given position to the maximum of
         its current value and the proposed new value. If this actually
         ends up changing the value, then this method sets is_dirty to

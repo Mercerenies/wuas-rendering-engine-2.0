@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import Iterator, Iterable, Any, cast, Callable, Optional
+from typing import Iterator, Iterable, Any, cast, Callable, Optional, Protocol, Self
 import math
 from pathlib import Path
 import importlib
@@ -14,6 +14,11 @@ import dataclasses
 from PIL import ImageDraw
 
 
+class _HasIntAdd(Protocol):
+    def __add__(self, other: int) -> Self:
+        ...
+
+
 def lerp(a: float, b: float, amount: float) -> float:
     """Linear interpolation between a and b, using amount as the
     interpolation factor. If amount is not between 0 and 1, then this
@@ -21,7 +26,10 @@ def lerp(a: float, b: float, amount: float) -> float:
     return a * (1 - amount) + b * amount
 
 
-def manhattan_circle(origin: tuple[int, int, int], distance: int) -> Iterator[tuple[int, int, int]]:
+def manhattan_circle[X: _HasIntAdd, Y: _HasIntAdd, Z: _HasIntAdd](
+        origin: tuple[X, Y, Z],
+        distance: int,
+) -> Iterator[tuple[X, Y, Z]]:
     xorigin, yorigin, zorigin = origin
     for dx in range(- distance, distance + 1):
         yrange = distance - abs(dx)
@@ -99,6 +107,7 @@ def to_dataclass_checked[T](cls: type[T], value: Any) -> T:
     if not dataclasses.is_dataclass(cls):
         raise TypeError('to_dataclass_checked only works with dataclasses')
     args: dict[str, Any] = {}
+    module = importlib.import_module(cls.__module__)
     for field in dataclasses.fields(cls):
         if not field.init:
             continue
@@ -108,18 +117,18 @@ def to_dataclass_checked[T](cls: type[T], value: Any) -> T:
         except AttributeError:
             if is_required:
                 raise
-        field_type = _parse_dataclass_type(field.type)
+        field_type = _parse_dataclass_type(module.__dict__, field.type)
         if not isinstance(args[field.name], field_type):
             raise TypeError(f'Field {field.name} in {cls} (value = {args[field.name]}) is not of type {field.type}')
     return cast(T, cls(**args))
 
 
-def _parse_dataclass_type(type_: str | type[object] | None) -> type[object]:
+def _parse_dataclass_type(globals: dict[str, Any], type_: str | type[object] | None) -> type[object]:
     if isinstance(type_, type):
         return type_
     if type_ is None:
         return object
-    return cast('type[object]', eval(type_))
+    return cast('type[object]', eval(type_, globals))
 
 
 def project_root() -> Path:

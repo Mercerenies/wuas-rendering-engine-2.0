@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from wuas.board import Board, move_token, Space
+from wuas.floornumber import FloorNumber
 from contextlib import contextmanager
 from typing import Iterator
 
@@ -19,9 +20,9 @@ class SinglePlayerBoard:
     """
     board: Board
     player_id: str
-    _player_pos: tuple[int, int, int]
+    _player_pos: tuple[int, int, FloorNumber]
 
-    def __init__(self, board: Board, player_id: str, player_pos: tuple[int, int, int] | None = None) -> None:
+    def __init__(self, board: Board, player_id: str, player_pos: tuple[int, int, FloorNumber] | None = None) -> None:
         """Constructs a SinglePlayerBoard by zooming in on a
         particular player of a Board object. If the target player is
         not at the indicated position, then this constructor raises
@@ -39,12 +40,12 @@ class SinglePlayerBoard:
             raise ValueError("Target player is not at indicated position")
 
     @property
-    def player_pos(self) -> tuple[int, int, int]:
+    def player_pos(self) -> tuple[int, int, FloorNumber]:
         """The position of the player targeted by this board."""
         return self._player_pos
 
     @player_pos.setter
-    def player_pos(self, pos: tuple[int, int, int]) -> None:
+    def player_pos(self, pos: tuple[int, int, FloorNumber]) -> None:
         """Moves the player targeted by this board to the indicated
         position."""
         move_token(self.board, token_id=self.player_id, src=self.player_pos, dest=pos)
@@ -54,7 +55,7 @@ class SinglePlayerBoard:
     def player_space(self) -> Space:
         return self.board.get_space(self.player_pos)
 
-    def move_player(self, delta: tuple[int, int, int]) -> tuple[int, int, int]:
+    def move_player(self, delta: tuple[int, int, FloorNumber]) -> tuple[int, int, FloorNumber]:
         """Moves the player targeted by this board by the indicated
         amount."""
         self.player_pos = _add_tuple3(self.player_pos, delta)
@@ -75,14 +76,14 @@ class SinglePlayerBoard:
 
 # TODO: This should REALLY be a Vector3 (and corresponding Vector2)
 # class everywhere, rather than doing this nonsense.
-def _add_tuple3(a: tuple[int, int, int], b: tuple[int, int, int], /) -> tuple[int, int, int]:
+def _add_tuple3(a: tuple[int, int, FloorNumber], b: tuple[int, int, FloorNumber], /) -> tuple[int, int, FloorNumber]:
     """Adds two 3-tuples."""
     ax, ay, az = a
     bx, by, bz = b
     return (ax + bx, ay + by, az + bz)
 
 
-def _find_player(board: Board, player_id: str) -> tuple[int, int, int]:
+def _find_player(board: Board, player_id: str) -> tuple[int, int, FloorNumber]:
     for pos in board.indices:
         space = board.get_space(pos)
         if any(tok.name == player_id for tok in space.get_tokens()):
