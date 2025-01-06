@@ -48,7 +48,7 @@ def render_to_data_file(board: Board, output_file: TextIO) -> None:
 
     # Board contents
     for z, floor in board.floors.items():
-        output_file.write(f"floor={z}\n")
+        output_file.write(f"floor={z.name}\n")
         _print_board_contents(floor, output_file)
     output_file.write("\n")
 

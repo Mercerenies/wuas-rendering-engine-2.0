@@ -256,12 +256,18 @@ class ItemDefinition:
 
     name: str
     desc: str
+    thumbnail: tuple[int, int] | None = None
 
     @classmethod
     def from_json_data(cls, json_data: Any) -> ItemDefinition:
+        if 'thumbnail' in json_data:
+            thumbnail = (json_data['thumbnail'][0], json_data['thumbnail'][1])
+        else:
+            thumbnail = None
         return cls(
             name=json_data['name'],
             desc=json_data['desc'],
+            thumbnail=thumbnail,
         )
 
 

@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from wuas.util import draw_dotted_line
-from wuas.board import Board, Floor, Space
+from wuas.board import Board, Floor, Space, ConcreteToken
 from wuas.floornumber import FloorNumber
 from wuas.constants import SPACE_WIDTH, SPACE_HEIGHT, Layer
 from wuas.config import ConfigFile, find_matching_for_layer
@@ -85,9 +85,7 @@ class Renderer:
             topleft_x = x * SPACE_WIDTH
             topleft_y = y * SPACE_HEIGHT
             for token in space.get_concrete_tokens():
-                token_data = self.config.definitions.get_token(token.token_name)
-                token_span = token_data.span or (1, 1)
-                token_image = self.config.tokens_png.select(token_data.thumbnail, span=token_span)
+                token_image = self._get_token_image_data(token)
                 dx, dy = token.position
                 self.image.paste(token_image, (topleft_x + dx, topleft_y + dy), token_image)
 
@@ -129,6 +127,15 @@ class Renderer:
             x1 -= 1
             y0 += 1
             y1 -= 1
+
+    def _get_token_image_data(self, token: ConcreteToken) -> Image.Image:
+        if token.item_name is not None:
+            item_data = self.config.definitions.get_item(token.item_name)
+            if item_data.thumbnail is not None:
+                return self.config.tokens_png.select(item_data.thumbnail, span=(1, 1))
+        token_data = self.config.definitions.get_token(token.token_name)
+        token_span = token_data.span or (1, 1)
+        return self.config.tokens_png.select(token_data.thumbnail, span=token_span)
 
     def build(self) -> Image.Image:
         """Return the image being constructed. This renderer should be
@@ -178,5 +185,5 @@ class SavedImageProducer(OutputProducer[SavedImageProducerArgs]):
         image.save(args.output_filename)
 
     def init_subparser(self, subparser: argparse.ArgumentParser) -> None:
-        subparser.add_argument('-F', '--floor-number', type=int, required=True)
+        subparser.add_argument('-F', '--floor-number', type=FloorNumber, required=True)
         subparser.add_argument('-o', '--output-filename', required=True)

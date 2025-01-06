@@ -45,7 +45,7 @@ def render_to_json(config: ConfigFile, board: Board) -> WuasJsonOutput:
     for z, floor in board.floors.items():
         spaces = _render_spaces(config, floor)
         tokens = _render_tokens(config, floor)
-        result[str(z)] = {'spaces': spaces, 'tokens': tokens}
+        result[z.name] = {'spaces': spaces, 'tokens': tokens}
     return result
 
 

@@ -34,6 +34,14 @@ class FloorNumber:
         else:
             object.__setattr__(self, '_value', value)
 
+    @property
+    def name(self) -> str:
+        """The floor's name, as a string."""
+        if isinstance(self._value, int):
+            return str(self._value)
+        else:
+            return self._value
+
     def as_integer(self) -> int:
         """Throws ValueError on infinity."""
         if self._value == 'inf':
